@@ -18,7 +18,7 @@ pip install -r requirements.txt
 1. Run the script:
 
 ```bash
-python live_ocr_datamuse.py
+python main.py
 ```
 
 1. Enter the letters you see in the Word Bomb game when prompted
