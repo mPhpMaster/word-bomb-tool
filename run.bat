@@ -1,0 +1,1 @@
+python ./word_bomb_tool.py
