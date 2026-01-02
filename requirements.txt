@@ -1,24 +1,5 @@
-# WBT - Requirements
-
-# Core dependencies
 requests>=2.28.0
-Pillow>=9.0.0
-pytesseract>=0.3.10
-keyboard>=0.13.5
-mss>=1.1.0
-
-# Optional: System tray support (comment out if not needed)
-pystray>=0.19.5
-
-# Optional: For better tray icon support on different platforms
-# Uncomment the ones relevant to your OS:
-
-# Windows (for better tray support)
-# pywin32>=305
-# pip install pywin32
-
-# Linux (GTK - for better tray support)
-# PyGObject>=3.42.0
-
-# macOS (for better tray support)
-# pyobjc>=9.0
+keyboard
+pytesseract
+mss
+Pillow

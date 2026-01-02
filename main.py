@@ -1,6 +1,4 @@
-﻿# main.py - Main application entry point
-
-import sys
+﻿import sys
 import os
 import time
 import keyboard

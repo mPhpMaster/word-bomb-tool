@@ -35,6 +35,8 @@ run.bat
 
 or just double click on [run.vbs](run.vbs).
 
+## How to use
+
 1. Go to `Options` -> `Select region` and select the block that shows the characters.
 
 2. Press `SHIFT` to fetch a suggestion or `F1` to toggle auto mode.
@@ -64,6 +66,10 @@ or just double click on [run.vbs](run.vbs).
 ## Troubleshooting
 
 - **No words found**: Make sure you entered the correct letters.
+
+## Support
+
+[Donate via PayPal](https://www.paypal.com/paypalme/mfsafadi)
 
 ## Disclaimer
 

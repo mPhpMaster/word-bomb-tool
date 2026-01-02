@@ -22,7 +22,7 @@ ocr_helper/
 ### 1. Prerequisites
 
 - **Python 3.8+**
-- **Tesseract WBT** (auto-installs on first run, or manually install from: https://github.com/tesseract-ocr/tesseract)
+- **Tesseract OCR** (auto-installs on first run, or manually install from: <https://github.com/tesseract-ocr/tesseract>)
 
 ### 2. Install Python Dependencies
 
@@ -33,16 +33,19 @@ pip install -r requirements.txt
 ### 3. Tesseract Setup (Optional - App will prompt for installation)
 
 #### Windows
-- Download installer: https://github.com/tesseract-ocr/tesseract/releases
+
+- Download installer: <https://github.com/tesseract-ocr/tesseract/releases>
 - Or let the app auto-install on first run
 - Recommended: Install for "All Users" and add to PATH
 
 #### macOS
+
 ```bash
 brew install tesseract
 ```
 
 #### Linux (Ubuntu/Debian)
+
 ```bash
 sudo apt-get install tesseract-ocr
 ```
@@ -56,6 +59,7 @@ python main.py
 ## Features
 
 ### 🎯 Core Features
+
 - **WBT Text Recognition** - Extract text from screen regions
 - **Word Suggestions** - Get word suggestions via Datamuse API
 - **Auto-Type** - Automatically type suggestions
@@ -63,6 +67,7 @@ python main.py
 - **Auto Mode** - Continuously monitor region for changes
 
 ### 🔍 Advanced Search (5 Modes)
+
 1. **Starts With** - Words beginning with letters
 2. **Ends With** - Words ending with letters
 3. **Contains** - Words containing letters anywhere
@@ -70,18 +75,21 @@ python main.py
 5. **Related Words** - Synonyms & conceptually related words
 
 ### 📊 Sorting Options
+
 - **Shortest** - By word length (ascending)
 - **Longest** - By word length (descending)
 - **Random** - Shuffled
 - **Frequency** - By word complexity/rarity
 
 ### 💾 System Tray Integration
+
 - Minimize to system tray
 - Quick-access context menu
 - Start/stop from tray without opening main window
 - Show/hide window from tray
 
 ### 📈 Telemetry & Metrics
+
 - Tracks WBT attempts & success rate
 - API request statistics
 - Average processing times
@@ -105,37 +113,46 @@ python main.py
 ## Configuration Files
 
 ### `ocr_config.json`
+
 Saves application state:
+
 - Last selected region
 - Current search/sort modes
 - Total words typed
 
 ### `ocr_metrics.json`
+
 Performance metrics:
+
 - WBT success rate
 - API response times
 - Session statistics
 
 ### `ocr_helper.log`
+
 Application logs with rotating file handlers (5MB per file, 3 backups)
 
 ## Troubleshooting
 
 ### Tesseract Not Found
+
 - Run `python main.py` and accept the auto-installation prompt
-- Or manually install from: https://github.com/tesseract-ocr/tesseract/releases
+- Or manually install from: <https://github.com/tesseract-ocr/tesseract/releases>
 
 ### Tray Icon Not Showing
+
 - **Windows**: Install `pywin32`: `pip install pywin32`
 - **Linux**: Install `PyGObject`: `pip install PyGObject`
 - App will still work without tray icon
 
 ### Hotkeys Not Responding
+
 - Ensure app has focus in taskbar
 - Some apps (games) may capture hotkeys
 - Try running as administrator
 
 ### Poor WBT Results
+
 - Select larger region with better lighting
 - Ensure text contrast is high
 - Use monospace fonts if possible
@@ -161,6 +178,7 @@ Application logs with rotating file handlers (5MB per file, 3 backups)
 ## Development
 
 ### Adding Tests
+
 ```python
 # test_suggestion_manager.py
 from suggestion_manager import SuggestionManager
@@ -172,7 +190,9 @@ def test_sort_shortest():
 ```
 
 ### Extending Functionality
+
 Each module is designed to be independent:
+
 - `ocr_processor.py` - Replace with different WBT engine
 - `api_client.py` - Swap with different suggestion API
 - `ui_manager.py` - Migrate to Qt/wxPython
@@ -185,6 +205,7 @@ MIT License - Feel free to modify and distribute
 ## Support
 
 For issues or feature requests, check:
+
 - Application logs in `ocr_helper.log`
 - Metrics in `ocr_metrics.json`
 - Stack trace in console output
