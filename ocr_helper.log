@@ -1,0 +1,541 @@
+2026-01-02 02:52:28,420 - INFO - Configuration loaded from file
+2026-01-02 02:52:28,420 - INFO - ========== WBT STARTED ==========
+2026-01-02 02:52:29,018 - INFO - ========== WBT STARTED ==========
+2026-01-02 02:52:29,018 - INFO - 
+Current Mode: Contains
+Current Sort: Random
+Auto Mode: Off
+Words Typed: 0
+API Status: [OK] Online
+
+2026-01-02 02:52:29,019 - WARNING - Press TAB to select a region
+2026-01-02 02:52:41,231 - INFO - Current Mode: Rhymes
+2026-01-02 02:52:41,233 - INFO - Configuration saved
+2026-01-02 02:52:42,048 - INFO - Current Mode: Related Words
+2026-01-02 02:52:42,049 - INFO - Configuration saved
+2026-01-02 02:52:43,144 - INFO - Current Mode: Starts With
+2026-01-02 02:52:43,145 - INFO - Configuration saved
+2026-01-02 02:52:43,727 - INFO - Current Mode: Ends With
+2026-01-02 02:52:43,728 - INFO - Configuration saved
+2026-01-02 02:52:44,264 - INFO - Current Mode: Contains
+2026-01-02 02:52:44,264 - INFO - Configuration saved
+2026-01-02 02:52:47,504 - INFO - Current Sort: Frequency
+2026-01-02 02:52:47,505 - INFO - Configuration saved
+2026-01-02 02:52:48,031 - INFO - Current Sort: Shortest
+2026-01-02 02:52:48,032 - INFO - Configuration saved
+2026-01-02 02:52:48,848 - INFO - Current Sort: Longest
+2026-01-02 02:52:48,849 - INFO - Configuration saved
+2026-01-02 02:52:49,407 - INFO - Current Sort: Random
+2026-01-02 02:52:49,408 - INFO - Configuration saved
+2026-01-02 02:52:50,504 - INFO - Current Sort: Frequency
+2026-01-02 02:52:50,505 - INFO - Configuration saved
+2026-01-02 02:52:51,031 - INFO - Current Sort: Shortest
+2026-01-02 02:52:51,032 - INFO - Configuration saved
+2026-01-02 02:52:59,046 - INFO - New region selected.
+2026-01-02 02:52:59,058 - INFO - Configuration saved
+2026-01-02 02:53:07,544 - INFO - Processing WBT...
+2026-01-02 02:53:07,676 - INFO - --- WBT: cho ---
+2026-01-02 02:53:07,676 - INFO - API request for Contains: 'cho'
+2026-01-02 02:53:09,254 - INFO - API call successful in 1577.71ms, found 48 suggestions
+2026-01-02 02:53:09,254 - INFO - Found 48 suggestions.
+2026-01-02 02:53:09,255 - INFO - echo
+ichor
+cholo
+chomo
+chore
+chord
+chose
+choke
+choler
+archon
+... and 38 more
+2026-01-02 02:53:09,255 - INFO - Typing: 'echo'
+2026-01-02 02:53:12,063 - INFO - Auto mode ENABLED.
+2026-01-02 02:53:12,230 - INFO - Auto-detected: 'sm'
+2026-01-02 02:53:12,231 - INFO - Processing WBT...
+2026-01-02 02:53:12,384 - WARNING - WBT returned no characters.
+2026-01-02 02:53:22,570 - INFO - New region selected.
+2026-01-02 02:53:22,577 - INFO - Configuration saved
+2026-01-02 02:53:25,464 - INFO - Auto-detected: 'mor'
+2026-01-02 02:53:25,464 - INFO - Processing WBT...
+2026-01-02 02:53:25,483 - INFO - --- WBT: mor ---
+2026-01-02 02:53:25,484 - INFO - API request for Contains: 'mor'
+2026-01-02 02:53:26,169 - INFO - API call successful in 685.13ms, found 50 suggestions
+2026-01-02 02:53:26,169 - INFO - Found 50 suggestions.
+2026-01-02 02:53:26,169 - INFO - more
+moral
+moron
+morose
+clamor
+tremor
+morbid
+morsel
+morass
+amoral
+... and 40 more
+2026-01-02 02:53:26,170 - INFO - Typing: 'more'
+2026-01-02 02:53:27,655 - INFO - Auto-detected: 'lsa'
+2026-01-02 02:53:27,655 - INFO - Processing WBT...
+2026-01-02 02:53:27,667 - INFO - --- WBT: lsa ---
+2026-01-02 02:53:27,668 - INFO - API request for Contains: 'lsa'
+2026-01-02 02:53:28,318 - INFO - API call successful in 649.76ms, found 42 suggestions
+2026-01-02 02:53:28,319 - INFO - Found 42 suggestions.
+2026-01-02 02:53:28,320 - INFO - lsa
+elsa
+flsa
+salsa
+balsa
+hilsa
+helsa
+halsa
+dilsa
+tulsa
+... and 32 more
+2026-01-02 02:53:28,321 - INFO - Typing: 'lsa'
+2026-01-02 02:53:29,708 - INFO - Auto-detected: 'sa'
+2026-01-02 02:53:29,708 - INFO - Processing WBT...
+2026-01-02 02:53:29,717 - INFO - --- WBT: sa ---
+2026-01-02 02:53:29,717 - INFO - API request for Contains: 'sa'
+2026-01-02 02:53:30,158 - INFO - API call successful in 440.26ms, found 49 suggestions
+2026-01-02 02:53:30,159 - INFO - Found 49 suggestions.
+2026-01-02 02:53:30,160 - INFO - assay
+fossa
+assail
+assage
+ersatz
+assault
+presage
+forsake
+prosaic
+artisan
+... and 39 more
+2026-01-02 02:53:30,160 - INFO - Typing: 'assay'
+2026-01-02 02:53:42,893 - INFO - Auto-detected: 'an'
+2026-01-02 02:53:42,893 - INFO - Processing WBT...
+2026-01-02 02:53:42,900 - INFO - --- WBT: an ---
+2026-01-02 02:53:42,901 - INFO - API request for Contains: 'an'
+2026-01-02 02:53:43,141 - INFO - API call successful in 239.59ms, found 50 suggestions
+2026-01-02 02:53:43,142 - INFO - Found 50 suggestions.
+2026-01-02 02:53:43,142 - INFO - pant
+plan
+scant
+shank
+panic
+pliant
+pedant
+prance
+pander
+piquant
+... and 40 more
+2026-01-02 02:53:43,143 - INFO - Typing: 'pant'
+2026-01-02 02:53:44,632 - INFO - Auto-detected: 'ch'
+2026-01-02 02:53:44,632 - INFO - Processing WBT...
+2026-01-02 02:53:44,651 - INFO - --- WBT: ch ---
+2026-01-02 02:53:44,652 - INFO - API request for Contains: 'ch'
+2026-01-02 02:53:44,943 - INFO - API call successful in 290.15ms, found 50 suggestions
+2026-01-02 02:53:44,944 - INFO - Found 50 suggestions.
+2026-01-02 02:53:44,944 - INFO - arch
+ache
+pitch
+peach
+perch
+bunch
+pinch
+batch
+poach
+bitch
+... and 40 more
+2026-01-02 02:53:44,945 - INFO - Typing: 'arch'
+2026-01-02 02:53:47,443 - INFO - Auto-detected: 'dec'
+2026-01-02 02:53:47,444 - INFO - Processing WBT...
+2026-01-02 02:53:47,451 - INFO - --- WBT: dec ---
+2026-01-02 02:53:47,451 - INFO - API request for Contains: 'dec'
+2026-01-02 02:53:48,107 - INFO - API call successful in 656.39ms, found 50 suggestions
+2026-01-02 02:53:48,108 - INFO - Found 50 suggestions.
+2026-01-02 02:53:48,108 - INFO - deck
+decay
+decry
+deceit
+decent
+decree
+decant
+decide
+decade
+decline
+... and 40 more
+2026-01-02 02:53:48,109 - INFO - Typing: 'deck'
+2026-01-02 02:53:49,581 - INFO - Auto-detected: 'of'
+2026-01-02 02:53:49,581 - INFO - Processing WBT...
+2026-01-02 02:53:49,601 - INFO - --- WBT: of ---
+2026-01-02 02:53:49,602 - INFO - API request for Contains: 'of'
+2026-01-02 02:53:50,029 - INFO - API call successful in 427.43ms, found 20 suggestions
+2026-01-02 02:53:50,030 - INFO - Found 20 suggestions.
+2026-01-02 02:53:50,030 - INFO - loft
+goof
+foof
+boof
+aloof
+lofty
+goofy
+croft
+boffo
+aloft
+... and 10 more
+2026-01-02 02:53:50,031 - INFO - Typing: 'loft'
+2026-01-02 02:53:53,530 - INFO - Auto-detected: 'enc'
+2026-01-02 02:53:53,530 - INFO - Processing WBT...
+2026-01-02 02:53:53,551 - INFO - --- WBT: enc ---
+2026-01-02 02:53:53,551 - INFO - API request for Contains: 'enc'
+2026-01-02 02:53:54,213 - INFO - API call successful in 661.57ms, found 50 suggestions
+2026-01-02 02:53:54,213 - INFO - Found 50 suggestions.
+2026-01-02 02:53:54,213 - INFO - hence
+wench
+clench
+essence
+potency
+enclave
+ardency
+cadence
+clemency
+prudence
+... and 40 more
+2026-01-02 02:53:54,214 - INFO - Typing: 'hence'
+2026-01-02 02:53:55,778 - INFO - Auto-detected: 'dis'
+2026-01-02 02:53:55,779 - INFO - Processing WBT...
+2026-01-02 02:53:55,784 - INFO - --- WBT: dis ---
+2026-01-02 02:53:55,784 - INFO - API request for Contains: 'dis'
+2026-01-02 02:53:56,419 - INFO - API call successful in 634.71ms, found 50 suggestions
+2026-01-02 02:53:56,420 - INFO - Found 50 suggestions.
+2026-01-02 02:53:56,420 - INFO - dismal
+dismay
+disdain
+discern
+display
+dispute
+dissent
+discord
+dismiss
+dismayed
+... and 40 more
+2026-01-02 02:53:56,421 - INFO - Typing: 'dismal'
+2026-01-02 02:54:03,135 - INFO - Auto-detected: 'dy'
+2026-01-02 02:54:03,135 - INFO - Processing WBT...
+2026-01-02 02:54:03,151 - INFO - --- WBT: dy ---
+2026-01-02 02:54:03,152 - INFO - API request for Contains: 'dy'
+2026-01-02 02:54:03,782 - INFO - API call successful in 630.30ms, found 48 suggestions
+2026-01-02 02:54:03,783 - INFO - Found 48 suggestions.
+2026-01-02 02:54:03,783 - INFO - dyke
+eddy
+lady
+body
+dyad
+giddy
+randy
+heady
+gaudy
+ruddy
+... and 38 more
+2026-01-02 02:54:03,784 - INFO - Typing: 'dyke'
+2026-01-02 02:54:05,254 - INFO - Auto-detected: 'mis'
+2026-01-02 02:54:05,255 - INFO - Processing WBT...
+2026-01-02 02:54:05,267 - INFO - --- WBT: mis ---
+2026-01-02 02:54:05,268 - INFO - API request for Contains: 'mis'
+2026-01-02 02:54:05,935 - INFO - API call successful in 667.13ms, found 50 suggestions
+2026-01-02 02:54:05,936 - INFO - Found 50 suggestions.
+2026-01-02 02:54:05,936 - INFO - mist
+miss
+amiss
+demise
+misery
+mishap
+remiss
+surmise
+premise
+dismiss
+... and 40 more
+2026-01-02 02:54:05,937 - INFO - Typing: 'mist'
+2026-01-02 02:54:07,396 - INFO - Auto-detected: 'ul'
+2026-01-02 02:54:07,396 - INFO - Processing WBT...
+2026-01-02 02:54:07,400 - INFO - --- WBT: ul ---
+2026-01-02 02:54:07,401 - INFO - API request for Contains: 'ul'
+2026-01-02 02:54:07,723 - INFO - API call successful in 321.99ms, found 50 suggestions
+2026-01-02 02:54:07,723 - INFO - Found 50 suggestions.
+2026-01-02 02:54:07,724 - INFO - pule
+soul
+sulk
+vault
+awful
+annul
+sullen
+sultry
+artful
+vulgar
+... and 40 more
+2026-01-02 02:54:07,724 - INFO - Typing: 'pule'
+2026-01-02 02:54:09,214 - INFO - Auto-detected: 'neu'
+2026-01-02 02:54:09,214 - INFO - Processing WBT...
+2026-01-02 02:54:09,235 - INFO - --- WBT: neu ---
+2026-01-02 02:54:09,235 - INFO - API request for Contains: 'neu'
+2026-01-02 02:54:10,033 - INFO - API call successful in 797.89ms, found 49 suggestions
+2026-01-02 02:54:10,034 - INFO - Found 49 suggestions.
+2026-01-02 02:54:10,034 - INFO - neum
+neut
+pneuma
+neuter
+neural
+lineup
+veneur
+neuron
+flaneur
+neutral
+... and 39 more
+2026-01-02 02:54:10,035 - INFO - Typing: 'neum'
+2026-01-02 02:54:20,767 - INFO - Auto mode DISABLED.
+2026-01-02 02:54:27,617 - INFO - New region selected.
+2026-01-02 02:54:27,628 - INFO - Configuration saved
+2026-01-02 02:54:31,320 - INFO - Shutting down...
+2026-01-02 02:54:31,321 - INFO - Configuration saved
+2026-01-02 02:54:31,323 - INFO - Metrics saved
+2026-01-02 03:12:22,830 - INFO - Configuration loaded from file
+2026-01-02 03:12:22,831 - INFO - ========== WBT STARTED ==========
+2026-01-02 03:12:23,513 - INFO - ========== WBT STARTED ==========
+2026-01-02 03:12:23,513 - INFO - 
+Current Mode: Contains
+Current Sort: Shortest
+Auto Mode: Off
+Words Typed: 14
+API Status: [OK] Online
+
+2026-01-02 03:12:31,044 - INFO - New region selected.
+2026-01-02 03:12:31,052 - INFO - Configuration saved
+2026-01-02 03:12:34,700 - INFO - Current Mode: Starts With
+2026-01-02 03:12:34,702 - INFO - Configuration saved
+2026-01-02 03:12:37,481 - INFO - Current Sort: Random
+2026-01-02 03:12:37,482 - INFO - Configuration saved
+2026-01-02 03:12:40,487 - INFO - Processing WBT...
+2026-01-02 03:12:40,633 - INFO - --- WBT: l ---
+2026-01-02 03:12:40,633 - INFO - API request for Starts With: 'l'
+2026-01-02 03:12:41,647 - INFO - API call successful in 1013.79ms, found 49 suggestions
+2026-01-02 03:12:41,648 - INFO - Found 49 suggestions.
+2026-01-02 03:12:41,648 - INFO - lucid
+lucidity
+laconic
+luster
+land
+lacuna
+lank
+latent
+lugubrious
+lust
+... and 39 more
+2026-01-02 03:12:41,649 - INFO - Typing: 'lucid'
+2026-01-02 03:12:43,999 - INFO - Auto mode ENABLED.
+2026-01-02 03:12:44,212 - INFO - Auto-detected: 'd'
+2026-01-02 03:12:44,213 - INFO - Processing WBT...
+2026-01-02 03:12:44,354 - WARNING - WBT returned no characters.
+2026-01-02 03:12:50,799 - INFO - New region selected.
+2026-01-02 03:12:50,810 - INFO - Configuration saved
+2026-01-02 03:12:51,848 - INFO - Auto-detected: 's'
+2026-01-02 03:12:51,848 - INFO - Processing WBT...
+2026-01-02 03:12:51,868 - INFO - --- WBT: s ---
+2026-01-02 03:12:51,869 - INFO - API request for Starts With: 's'
+2026-01-02 03:12:53,040 - INFO - Processing WBT...
+2026-01-02 03:12:53,051 - INFO - Typing: 'lucidity'
+2026-01-02 03:12:53,704 - INFO - Typing: 'laconic'
+2026-01-02 03:12:54,527 - INFO - API call successful in 2658.42ms, found 50 suggestions
+2026-01-02 03:12:54,528 - INFO - Found 50 suggestions.
+2026-01-02 03:12:54,528 - INFO - sanction
+savage
+saturnine
+saunter
+salient
+salience
+saccharine
+solitude
+solid
+solemn
+... and 40 more
+2026-01-02 03:12:54,529 - INFO - Typing: 'sanction'
+2026-01-02 03:12:56,340 - INFO - Auto-detected: 'n'
+2026-01-02 03:12:56,340 - INFO - Processing WBT...
+2026-01-02 03:12:56,351 - INFO - --- WBT: n ---
+2026-01-02 03:12:56,351 - INFO - API request for Starts With: 'n'
+2026-01-02 03:12:56,541 - INFO - API call successful in 189.70ms, found 49 suggestions
+2026-01-02 03:12:56,542 - INFO - Found 49 suggestions.
+2026-01-02 03:12:56,543 - INFO - nous
+neglected
+nefarious
+neophyte
+nexus
+nettled
+nocturne
+nonchalant
+notwithstanding
+negus
+... and 39 more
+2026-01-02 03:12:56,543 - INFO - Typing: 'nous'
+2026-01-02 03:13:05,000 - INFO - Auto-detected: 's'
+2026-01-02 03:13:05,001 - INFO - Processing WBT...
+2026-01-02 03:13:05,017 - INFO - --- WBT: s ---
+2026-01-02 03:13:05,017 - INFO - API request for Starts With: 's'
+2026-01-02 03:13:05,198 - INFO - API call successful in 181.24ms, found 50 suggestions
+2026-01-02 03:13:05,199 - INFO - Found 50 suggestions.
+2026-01-02 03:13:05,199 - INFO - soliloquy
+sardonically
+sage
+satisfaction
+sardonic
+saturnine
+sacred
+solitary
+salience
+saunter
+... and 40 more
+2026-01-02 03:13:05,200 - INFO - Typing: 'soliloquy'
+2026-01-02 03:13:07,095 - INFO - Auto-detected: 'y'
+2026-01-02 03:13:07,095 - INFO - Processing WBT...
+2026-01-02 03:13:07,101 - INFO - --- WBT: y ---
+2026-01-02 03:13:07,102 - INFO - API request for Starts With: 'y'
+2026-01-02 03:13:07,337 - INFO - API call successful in 234.98ms, found 48 suggestions
+2026-01-02 03:13:07,343 - INFO - Found 48 suggestions.
+2026-01-02 03:13:07,344 - INFO - yammer
+yearning
+yule
+yell
+yen
+yanked
+yammered
+yes
+yellow
+yard
+... and 38 more
+2026-01-02 03:13:07,345 - INFO - Typing: 'yammer'
+2026-01-02 03:13:12,024 - INFO - Auto-detected: 'r'
+2026-01-02 03:13:12,024 - INFO - Processing WBT...
+2026-01-02 03:13:12,034 - INFO - --- WBT: r ---
+2026-01-02 03:13:12,035 - INFO - API request for Starts With: 'r'
+2026-01-02 03:13:12,227 - INFO - API call successful in 192.40ms, found 50 suggestions
+2026-01-02 03:13:12,228 - INFO - Found 50 suggestions.
+2026-01-02 03:13:12,229 - INFO - refined
+reticence
+recess
+reprobate
+repercussions
+render
+regent
+resolution
+remarkable
+resolve
+... and 40 more
+2026-01-02 03:13:12,229 - INFO - Typing: 'refined'
+2026-01-02 03:13:16,999 - INFO - Auto-detected: 'd'
+2026-01-02 03:13:17,000 - INFO - Processing WBT...
+2026-01-02 03:13:17,017 - INFO - --- WBT: d ---
+2026-01-02 03:13:17,018 - INFO - API request for Starts With: 'd'
+2026-01-02 03:13:17,216 - INFO - API call successful in 198.72ms, found 50 suggestions
+2026-01-02 03:13:17,216 - INFO - Found 50 suggestions.
+2026-01-02 03:13:17,217 - INFO - dissent
+discernment
+distraught
+disconcerted
+discharge
+diminutive
+discern
+diminish
+displeased
+discontent
+... and 40 more
+2026-01-02 03:13:17,217 - INFO - Typing: 'dissent'
+2026-01-02 03:13:18,946 - INFO - Auto-detected: 't'
+2026-01-02 03:13:18,946 - INFO - Processing WBT...
+2026-01-02 03:13:18,950 - INFO - --- WBT: t ---
+2026-01-02 03:13:18,951 - INFO - API request for Starts With: 't'
+2026-01-02 03:13:19,134 - INFO - API call successful in 183.49ms, found 50 suggestions
+2026-01-02 03:13:19,135 - INFO - Found 50 suggestions.
+2026-01-02 03:13:19,135 - INFO - temperament
+tempestuous
+torment
+torrid
+tortuous
+torpid
+tentative
+temperamental
+tool
+temple
+... and 40 more
+2026-01-02 03:13:19,136 - INFO - Typing: 'temperament'
+2026-01-02 03:13:27,268 - INFO - Auto-detected: 's'
+2026-01-02 03:13:27,268 - INFO - Processing WBT...
+2026-01-02 03:13:27,285 - INFO - --- WBT: s ---
+2026-01-02 03:13:27,285 - INFO - API request for Starts With: 's'
+2026-01-02 03:13:27,469 - INFO - API call successful in 183.49ms, found 50 suggestions
+2026-01-02 03:13:27,469 - INFO - Found 50 suggestions.
+2026-01-02 03:13:27,470 - INFO - salient
+savage
+sated
+salvation
+sardonically
+solace
+sanctum
+solitary
+sardonic
+sapient
+... and 40 more
+2026-01-02 03:13:27,470 - INFO - Typing: 'salient'
+2026-01-02 03:13:29,051 - INFO - Auto-detected: 't'
+2026-01-02 03:13:29,052 - INFO - Processing WBT...
+2026-01-02 03:13:29,068 - INFO - --- WBT: t ---
+2026-01-02 03:13:29,069 - INFO - API request for Starts With: 't'
+2026-01-02 03:13:29,251 - INFO - API call successful in 181.89ms, found 50 suggestions
+2026-01-02 03:13:29,251 - INFO - Found 50 suggestions.
+2026-01-02 03:13:29,252 - INFO - top
+torment
+toddle
+tenacious
+totem
+tolerance
+torrent
+temperate
+touchy
+tempest
+... and 40 more
+2026-01-02 03:13:29,253 - INFO - Typing: 'top'
+2026-01-02 03:13:34,722 - INFO - Auto-detected: 'p'
+2026-01-02 03:13:34,723 - INFO - Processing WBT...
+2026-01-02 03:13:34,734 - INFO - --- WBT: p ---
+2026-01-02 03:13:34,735 - INFO - API request for Starts With: 'p'
+2026-01-02 03:13:34,923 - INFO - API call successful in 187.19ms, found 50 suggestions
+2026-01-02 03:13:34,923 - INFO - Found 50 suggestions.
+2026-01-02 03:13:34,924 - INFO - plod
+point
+plume
+pliant
+post
+place
+plight
+poised
+plastered
+powerful
+... and 40 more
+2026-01-02 03:13:34,925 - INFO - Typing: 'plod'
+2026-01-02 03:13:36,269 - INFO - Auto-detected: 'd'
+2026-01-02 03:13:36,269 - INFO - Processing WBT...
+2026-01-02 03:13:36,286 - INFO - --- WBT: d ---
+2026-01-02 03:13:36,286 - INFO - API request for Starts With: 'd'
+2026-01-02 03:13:36,474 - INFO - API call successful in 188.62ms, found 50 suggestions
+2026-01-02 03:13:36,475 - INFO - Found 50 suggestions.
+2026-01-02 03:13:36,475 - INFO - dismayed
+disquiet
+dispirited
+dissonance
+dispute
+distress
+diligent
+distinct
+disciple
+discharge
+... and 40 more
+2026-01-02 03:13:36,476 - INFO - Typing: 'dismayed'
+2026-01-02 03:13:40,447 - INFO - Shutting down...
+2026-01-02 03:13:40,449 - INFO - Configuration saved
+2026-01-02 03:13:40,449 - INFO - Metrics saved
