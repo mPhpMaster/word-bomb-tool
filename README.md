@@ -7,6 +7,12 @@
 
 ## Installation
 
+1. Clone the repository:
+
+```bash
+git clone https://github.com/mPhpMaster/word-bomb-tool.git
+```
+
 1. Install Python dependencies:
 
 ```bash
@@ -21,50 +27,46 @@ pip install -r requirements.txt
 python main.py
 ```
 
-1. Enter the letters you see in the Word Bomb game when prompted
+or
 
-2. The tool will suggest all valid words that can be made from those letters, ranked by length
+```powershell
+run.bat
+```
 
-3. Type `quit` to exit the program
+or just double click on [run.vbs](run.vbs).
+
+1. Go to `Options` -> `Select region` and select the block that shows the characters.
+
+2. Press `SHIFT` to fetch a suggestion or `F1` to toggle auto mode.
+
+3. Press `Ctrl+C` to exit the program.
 
 ## How It Works
 
-- **Manual Input**: Simply enter the letters from the Word Bomb game board
-- **Word Matching**: Compares entered letters against a dictionary of valid English words
-- **Ranking**: Sorts words by length (longer words are prioritized in Word Bomb)
-- **Suggestions**: Displays all valid words grouped by length
+- **OCR/Manual Input**: Simply enter/reads the letters from the Word Bomb game board/selected region.
+- **Call Api**: Fetch word suggestions from [Datamuse API](https://api.datamuse.com/words).
+- **Typing**: Automatically types the suggested word into the game.
+- **Wait**: Waits for `the game to ask for a word` or `the user to press shift/f1` before repeating the process.
 
-## Example
+## Options
 
-```
-Enter letters: abcdef
-Analyzing letters: abcdef
-Unique letters: abcdef
-Found 15 valid words
-
-============================================================
-WORD SUGGESTIONS
-============================================================
-
-6 letters (1 words):
-  fecund
-
-5 letters (3 words):
-  acned, bated, caged
-```
-
-## Tips
-
-- Enter all visible letters from the game board
-- Longer words generally score more points in Word Bomb
-- The tool downloads a full English dictionary on first run (saves locally for faster subsequent runs)
+- **Select Region**: Press `TAB` to select a region.
+- **Auto Mode**: Press `F1` to toggle auto mode.
+- **Exit Program**: Press `Ctrl+C` to exit the program.
+- **Show/Hide window**: Press `Caps Lock` to toggle the log window.
+- **Show/Hide help**: Press `.` to toggle the help window.
+- **Change Search Mode**: Press `Page Up` to change the search mode.
+- **Change Sort Mode**: Press `Page Down` to change the sort mode.
+- **Clear History**: Press `Delete` to clear the history.
+- **Undo Last Word**: Press `Ctrl+Z` to undo the last word.
+- **Fetch Suggestions**: Press `SHIFT` to fetch suggestions.
 
 ## Troubleshooting
 
-- **No words found**: Make sure you entered the correct letters
-- **Dictionary not loading**: Check your internet connection for the first run
-- **Exit program**: Type 'quit' or press Ctrl+C
+- **No words found**: Make sure you entered the correct letters.
 
 ## Disclaimer
 
 This is for educational purposes. Use responsibly and check Discord's terms of service.
+
+Licensed under the MIT License. See [LICENSE](LICENSE) for details.
