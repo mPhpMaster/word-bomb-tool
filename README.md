@@ -16,8 +16,8 @@
 ### Video
 
 <video controls width=1280>
-  <source src=https://github.com/mPhpMaster/word-bomb-tool/raw/main/v5/Screens/Word_Bomb_Tool.webm type=video/webm>
-  Your browser does not support the video tag. Download: `https://github.com/mPhpMaster/word-bomb-tool/raw/main/v5/Screens/Word_Bomb_Tool.webm`
+  <source src=https://github.com/mPhpMaster/word-bomb-tool/raw/refs/heads/main/Screens/Word_Bomb_Tool.webm type=video/webm>
+  Your browser does not support the video tag. Download: `https://github.com/mPhpMaster/word-bomb-tool/raw/refs/heads/main/Screens/Word_Bomb_Tool.webm`
 </video>
 
 ## Options
