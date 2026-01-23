@@ -3,3 +3,4 @@ keyboard
 pytesseract
 mss
 Pillow
+pyautogui
