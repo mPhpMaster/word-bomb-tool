@@ -1,60 +1,107 @@
-# WBT - Setup & Installation Guide
+# Word Bomb Tool - Setup & Installation Guide
 
 ## Project Structure
 
 ```
-root /
-├── config.py              # Configuration & constants
-├── logging_utils.py       # Logging setup
-├── state.py              # State management & metrics
-├── ocr_processor.py      # WBT processing
-├── api_client.py         # Datamuse API client
-├── suggestion_manager.py # Suggestion logic
-├── ui_manager.py         # UI windows & overlays
-├── tray_manager.py       # System tray icon
-├── main.py               # Application entry point
-├── requirements.txt      # Python dependencies
-└── README.md             # Documentation
+word-bomb-tool/
+├── config.py              # Application configuration and constants
+├── logging_utils.py       # Logging configuration and utilities
+├── state.py               # Application state management
+├── ocr_processor.py       # OCR processing and text recognition
+├── api_client.py          # Datamuse API client for word suggestions
+├── suggestion_manager.py  # Word suggestion logic and filtering
+├── ui_manager.py          # User interface components
+├── tray_manager.py        # System tray integration
+├── main.py                # Main application entry point
+├── requirements.txt       # Python dependencies
+├── README.md              # Project documentation
+├── SETUP.md               # This setup guide
+├── run.bat                # Windows launcher script
+├── run.sh                 # Linux/macOS launcher script
+└── run.vbs                # Windows background launcher
 ```
 
 ## Installation
 
 ### 1. Prerequisites
 
-- **Python 3.8+**
-- **Tesseract OCR** (auto-installs on first run, or manually install from: <https://github.com/tesseract-ocr/tesseract>)
+- **Python 3.8 or higher**
+  - Download: [Python Downloads](https://www.python.org/downloads/)
+  - During installation, make sure to check "Add Python to PATH"
+
+- **Tesseract OCR** (required for text recognition)
+  - Windows: [Download installer](https://github.com/UB-Mannheim/tesseract/wiki)
+  - macOS: `brew install tesseract`
+  - Ubuntu/Debian: `sudo apt install tesseract-ocr`
+  - The application will attempt to auto-install Tesseract on first run
 
 ### 2. Install Python Dependencies
+
+1. Clone the repository or download the source code
+2. Open a terminal/command prompt in the project directory
+3. Install the required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Tesseract Setup (Optional - App will prompt for installation)
+### 3. Configuration
+
+The application will create the following files on first run:
+- `ocr_config.json`: OCR configuration settings
+- `ocr_metrics.json`: Performance metrics
+- `ocr_helper.log`: Application log file
+
+### 4. Running the Application
 
 #### Windows
+- Double-click `run.bat` or `run.vbs` (runs in background)
+- Or run from command line: `python main.py`
 
-- Download installer: <https://github.com/tesseract-ocr/tesseract/releases>
-- Or let the app auto-install on first run
-- Recommended: Install for "All Users" and add to PATH
-
-#### macOS
-
+#### Linux/macOS
 ```bash
-brew install tesseract
+chmod +x run.sh
+./run.sh
+# Or directly: python3 main.py
 ```
 
-#### Linux (Ubuntu/Debian)
+## First-Time Setup
 
-```bash
-sudo apt-get install tesseract-ocr
-```
+1. Launch the application
+2. Press `TAB` to select the game region on screen
+3. The application will automatically detect and process the game text
+4. Press `SHIFT` to get word suggestions
+5. Use `F1` to toggle auto-suggest mode
 
-### 4. Run Application
+## Troubleshooting
 
-```bash
-python main.py
-```
+### Common Issues
+
+1. **Tesseract not found**
+   - Make sure Tesseract is installed and added to PATH
+   - Restart the application after installation
+
+2. **Missing dependencies**
+    ```bash
+   pip install --upgrade -r requirements.txt
+    ```
+
+3. **Permission issues**
+   - On Linux/macOS, you might need to run with sudo for Tesseract access
+   - On Windows, run Command Prompt as Administrator
+
+### Logs
+Check `ocr_helper.log` for detailed error messages and debugging information.
+
+## Updating
+
+To update the application:
+1. Pull the latest changes from the repository
+2. Reinstall dependencies if needed:
+   ```bash
+   pip install --upgrade -r requirements.txt
+   ```
+3. Restart the application
 
 ## Features
 
