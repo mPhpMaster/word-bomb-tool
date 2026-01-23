@@ -13,12 +13,11 @@
 
 *Figure 2: Word suggestion and game interaction*
 
-### Video
 
-<video controls width=1280>
-  <source src=@mPhpMaster/word-bomb-tool/files/Screens/Word_Bomb_Tool.webm type=video/webm>
-  Your browser does not support the video tag. Download: `@mPhpMaster/word-bomb-tool/files/Screens/Word_Bomb_Tool.webm`
-</video>
+![Screenshot 3](Screens/3.gif)
+
+*Figure 3: Application in action*
+
 
 ## Options
 
