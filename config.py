@@ -1,5 +1,3 @@
-# Application configuration and constants
-
 THEME = {
     "bg": "#282c34",
     "fg": "#abb2bf",
@@ -11,8 +9,11 @@ THEME = {
     "success": "#98c379",
     "warning": "#e5c07b",
     "font_family": "Consolas",
+    "definition_font_size": 14,
     "font_size": 10,
     "font_size_small": 9,
+    "focused_alpha": 1.0,
+    "unfocused_alpha": 0.85,
 }
 
 # File paths
@@ -21,9 +22,9 @@ LOG_FILE = "ocr_helper.log"
 METRICS_FILE = "ocr_metrics.json"
 
 # WBT Settings
-OCR_INTERVAL = 1
-OCR_TIMEOUT = 5
-TYPING_DELAY = 0.08
+OCR_INTERVAL = 0.5
+OCR_TIMEOUT = 1
+TYPING_DELAY = 0.5
 
 # API Settings
 DATAMUSE_API = "https://api.datamuse.com/words"

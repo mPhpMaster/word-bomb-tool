@@ -19,7 +19,7 @@ from state import StateManager
 from ocr_processor import OCRProcessor
 from api_client import DatamuseClient
 from suggestion_manager import SuggestionManager
-from ui_manager import RegionOverlay, RegionSelector, LogDisplay, HelpWindow
+from ui_manager import RegionOverlay, RegionSelector, LogDisplay, HelpWindow, DefinitionPopup
 from tray_manager import TrayIcon
 from tkinter import messagebox
 import tkinter as tk
@@ -56,6 +56,8 @@ class OCRApplication:
             'undo_word': self.undo_last_word,
             'show_help': self.show_help_window,
             'toggle_window': lambda: self.log_display.toggle_visibility(),
+            'fetch_suggestions': self.handle_shift_press,
+            'fetch_definitions': self.handle_alt_1_press,
             'exit': self.graceful_exit,
         }
     
@@ -89,6 +91,7 @@ API Status: {state.api_status}
 HOTKEYS
 =====================================
 Fetch Suggestions:  SHIFT
+Fetch Definitions:  Alt+1
 Select Region:    TAB
 
 Change Search Mode: Page Up
@@ -149,13 +152,54 @@ Quit Application:   Ctrl+C
                 self.state_manager.update_state(suggestions=suggestions, suggestion_index=0)
                 
                 self.log(f"Found {len(suggestions)} suggestions.")
-                self.log("\n".join(suggestions[:10]) +
-                        (f"\n... and {len(suggestions) - 10} more"
+                for i, suggestion in enumerate(suggestions[:10]):
+                    self.log(f"\t{i+1}. {suggestion}")
+                self.log((f"\n... and {len(suggestions) - 10} more"
                          if len(suggestions) > 10 else ""))
             else:
                 self.state_manager.update_state(suggestions=[], suggestion_index=0)
         
         self.type_next_word()
+     
+    def handle_alt_1_press(self):
+        """WBT and fetch definitions."""
+        state = self.state_manager.get_state()
+        if not state.region:
+            self.log("Cannot perform WBT: No region selected.", "ERROR")
+            self.select_region()
+            return
+        
+        self.executor.submit(self._handle_alt_1_async)
+    
+    def _handle_alt_1_async(self):
+        """Async WBT handler."""
+        state = self.state_manager.get_state()
+        region = state.region
+        if not region:
+            return
+        
+        self.log("Processing WBT...")
+        word = self.ocr_processor.perform_ocr(region)
+        
+        if not word:
+            self.log("WBT returned no definitions.", "WARNING")
+            return
+    
+        definitions = self.api_client.get_definitions(word)
+        self.state_manager.update_state(api_status=self.api_client.status)
+        
+        if definitions:
+            self.state_manager.update_state(definitions=definitions, definition_index=0)
+            self.log(f"Found {len(definitions)} definitions.")
+        else:
+            self.state_manager.update_state(definitions=[], definition_index=0)
+            self.log("No definitions found.", "WARNING")
+        
+        self.log(f"Showing definition for: '{word}'")
+        
+        # Create and display definition popup
+        def_popup = DefinitionPopup.show(self.log_display.root, word, definitions)
+        def_popup.wait_window(def_popup)  
     
     def type_next_word(self):
         """Type next untyped suggestion."""
@@ -318,14 +362,18 @@ Quit Application:   Ctrl+C
             if not PYSTRAY_AVAILABLE:
                 self.log("Tray icon disabled (pystray not installed)", "WARNING")
                 return
-            
+
             tray_callbacks = {
                 'select_region': self.callbacks['select_region'],
-                'toggle_window': self.callbacks['toggle_window'],
+                '-2': None,
+                'fetch_suggestions': self.callbacks['fetch_suggestions'],
+                'fetch_definitions': self.callbacks['fetch_definitions'],
                 # 'toggle_auto_mode': self.toggle_auto_mode,
                 # 'show_help': self.callbacks['show_help'],
                 # 'clear_history': self.callbacks['clear_history'],
-                # '': None,
+                '-1': None,
+                'toggle_window': self.callbacks['toggle_window'],
+                '-0': None,
                 'exit': self.callbacks['exit'],
             }
             
@@ -408,7 +456,9 @@ Quit Application:   Ctrl+C
         time.sleep(0.5)  # Let UI initialize
         
         self.log("========== WBT STARTED ==========")
-        self.log(self.get_state_text())
+        for i, line in enumerate(self.get_state_text().split("\n")):
+            self.log(f"{line}")
+        
         # self.show_help_window()
         
         state = self.state_manager.get_state()
@@ -419,6 +469,7 @@ Quit Application:   Ctrl+C
         
         # Register hotkeys
         keyboard.add_hotkey('shift', self.handle_shift_press)
+        keyboard.add_hotkey('alt+1', self.handle_alt_1_press)
         keyboard.add_hotkey('tab', self.select_region)
         keyboard.add_hotkey('page up', lambda: self.set_search_mode(
             (state.current_mode_index + 1) % len(SEARCH_MODES)))

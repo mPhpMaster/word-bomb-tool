@@ -100,6 +100,7 @@ python main.py
 | Key | Action |
 |-----|--------|
 | **SHIFT** | Fetch suggestions for WBT text |
+| **Alt+1** | Fetch definitions for WBT text |
 | **TAB** | Select new WBT region |
 | **Page Up** | Change search mode |
 | **Page Down** | Change sort mode |

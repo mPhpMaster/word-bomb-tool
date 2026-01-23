@@ -1,5 +1,3 @@
-# System tray icon and context menu
-
 import threading
 import logging
 from typing import Callable, Dict, Optional
@@ -70,8 +68,8 @@ class TrayIcon:
         # Add menu items from callbacks
         for label, callback in self.callbacks.items():
             # Convert snake_case to Title Case for display
-            if label == '' and callback == None:
-                menu_items.append(pystray.MenuItem('', lambda: None))
+            if callback == None:
+                menu_items.append(pystray.MenuItem(' ', lambda: None, enabled=False))
                 continue
             display_label = label.replace('_', ' ').title()
             if display_label.lower() != 'exit':
@@ -79,7 +77,6 @@ class TrayIcon:
                     pystray.MenuItem(display_label, callback)
                 )
             else:
-            # Add exit option
                 menu_items.append(
                     pystray.MenuItem(
                         display_label,

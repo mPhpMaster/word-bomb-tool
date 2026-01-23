@@ -1,5 +1,3 @@
-# logging_utils.py - Logging utilities and setup
-
 import logging
 import logging.handlers
 import sys

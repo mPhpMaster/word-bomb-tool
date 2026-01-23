@@ -33,6 +33,12 @@ or
 run.bat
 ```
 
+or
+
+```bash
+run.sh
+```
+
 or just double click on [run.vbs](run.vbs).
 
 ## How to use
@@ -62,6 +68,7 @@ or just double click on [run.vbs](run.vbs).
 - **Clear History**: Press `Delete` to clear the history.
 - **Undo Last Word**: Press `Ctrl+Z` to undo the last word.
 - **Fetch Suggestions**: Press `SHIFT` to fetch suggestions.
+- **Fetch Definitions**: Press `Alt+1` to fetch definitions.
 
 ## Troubleshooting
 

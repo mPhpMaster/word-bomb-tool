@@ -1,5 +1,3 @@
-# suggestion_manager.py - Suggestion handling and sorting
-
 import random
 import logging
 from typing import List

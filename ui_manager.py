@@ -115,8 +115,9 @@ class LogDisplay(threading.Thread):
     def run(self):
         self.root = tk.Tk()
         self.root.title("WBT")
-        self.root.geometry("550x450+10+10")
+        self.root.geometry("750x350+10+10")
         self.root.attributes("-topmost", True)
+        self.root.attributes("-alpha", THEME["unfocused_alpha"])
         self.root.resizable(True, True)
         self.root.config(bg=THEME["bg"])
 
@@ -171,6 +172,8 @@ class LogDisplay(threading.Thread):
                                    relief=tk.FLAT, bd=0, insertbackground=THEME["fg"])
         self.text_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        self.root.bind("<FocusIn>", self.handle_focus_in)
+        self.root.bind("<FocusOut>", self.handle_focus_out)
         self.root.protocol("WM_DELETE_WINDOW", self.callbacks['exit'])
         self.check_queue()
         self.root.mainloop()
@@ -208,6 +211,16 @@ class LogDisplay(threading.Thread):
             # Handle case where window was already destroyed
             pass
 
+    def handle_focus_in(self, event=None):
+        """Make window opaque on focus in."""
+        if self.root:
+            self.root.attributes("-alpha", THEME["focused_alpha"])
+
+    def handle_focus_out(self, event=None):
+        """Make window transparent on focus out."""
+        if self.root:
+            self.root.attributes("-alpha", THEME["unfocused_alpha"])
+
 class HelpWindow:
     """Help/hotkeys display window."""
     
@@ -232,3 +245,54 @@ class HelpWindow:
         help_win.bind("<Escape>", lambda e: help_win.destroy())
         
         return help_win
+
+class DefinitionPopup:
+    """Popup to display word definitions."""
+    def_win = None
+
+    @staticmethod
+    def show(parent_root, word: str, definitions: list):
+        """Create and display definition window."""
+
+        if DefinitionPopup.def_win and DefinitionPopup.def_win.winfo_exists():
+            DefinitionPopup.def_win.destroy()
+            DefinitionPopup.def_win = None
+
+        if not definitions:
+            return None
+
+        DefinitionPopup.def_win = tk.Toplevel(parent_root)
+        DefinitionPopup.def_win.title(f"Definition of '{word}'")
+        DefinitionPopup.def_win.attributes("-topmost", True)
+        DefinitionPopup.def_win.attributes("-alpha", THEME["unfocused_alpha"])
+        DefinitionPopup.def_win.state('zoomed')
+        DefinitionPopup.def_win.grab_set()
+        DefinitionPopup.def_win.config(bg=THEME["bg"])
+
+        text_widget = tk.Text(DefinitionPopup.def_win, font=(THEME["font_family"], THEME["definition_font_size"]),
+                             relief=tk.FLAT, bd=1, background=THEME["log_bg"], foreground=THEME["log_fg"],
+                             wrap=tk.WORD, padx=10, pady=10)
+        text_widget.pack(fill=tk.BOTH, expand=True)
+
+        if definitions:
+            for i, definition in enumerate(definitions):
+                text_widget.insert(tk.END, f"{i+1}. {definition.strip()}\n\n")
+        else:
+            text_widget.insert(tk.END, "No definitions found.")
+
+        text_widget.config(state=tk.DISABLED)
+        text_widget.bind("<Button-1>", DefinitionPopup.set_opaque)
+
+        close_button = ttk.Button(DefinitionPopup.def_win, text="Close", command=DefinitionPopup.def_win.destroy)
+        close_button.pack(pady=10)
+        DefinitionPopup.def_win.bind("<Escape>", lambda e: DefinitionPopup.def_win.destroy())
+
+        parent_root.wait_window(DefinitionPopup.def_win)
+
+        return DefinitionPopup.def_win
+
+    @staticmethod
+    def set_opaque(event=None):
+        """Set the window to be fully opaque."""
+        if DefinitionPopup.def_win:
+            DefinitionPopup.def_win.attributes("-alpha", THEME["focused_alpha"])

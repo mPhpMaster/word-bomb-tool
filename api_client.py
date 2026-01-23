@@ -1,9 +1,7 @@
-# api_client.py - Datamuse API client
-
 import requests
 import logging
 import time
-from typing import List
+from typing import List, Optional
 from config import DATAMUSE_API, OCR_TIMEOUT, MAX_SUGGESTIONS_DISPLAY, STATUS_ONLINE, STATUS_OFFLINE, STATUS_TIMEOUT, STATUS_ERROR
 
 logger = logging.getLogger(__name__)
@@ -59,6 +57,56 @@ class DatamuseClient:
             logger.info(f"API call successful in {duration:.2f}ms, found {len(suggestions)} suggestions")
             
             return suggestions
+        
+        except requests.exceptions.Timeout:
+            self.status = STATUS_TIMEOUT
+            logger.error("API request timeout")
+            return []
+        except requests.exceptions.ConnectionError:
+            self.status = STATUS_OFFLINE
+            logger.error("API connection failed")
+            return []
+        except Exception as e:
+            self.status = STATUS_ERROR
+            logger.error(f"API error: {e}", exc_info=True)
+            return []
+    
+    def get_definitions(self, word: str) -> str:
+        """
+        Fetch word description from Datamuse API.
+        
+        Args:
+            word: English word to get description for
+        
+        Returns:
+            Description of the word or empty string if failed
+        """
+        if not word or len(word) < 1:
+            return ""
+        
+        start_time = time.time()
+        
+        try:
+            params = {"qe": "sp", "md": "d", "max": 1, "sp": word}  # Request definitions
+            
+            logger.info(f"API request for definition of: '{word}'")
+            
+            response = self.session.get(f"{DATAMUSE_API}", params=params, timeout=OCR_TIMEOUT)
+            response.raise_for_status()
+            
+            data = response.json()
+
+            # Extract definition from response
+            if isinstance(data, list) and len(data) > 0 and "defs" in data[0]:
+                defs = data[0]["defs"]
+            else:
+                defs = []
+            
+            self.status = STATUS_ONLINE
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"API call successful in {duration:.2f}ms, found {len(defs)} definitions")
+            
+            return defs
         
         except requests.exceptions.Timeout:
             self.status = STATUS_TIMEOUT

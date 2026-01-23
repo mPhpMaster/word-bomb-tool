@@ -1,5 +1,3 @@
-# ocr_processor.py - WBT processing and image handling
-
 import pytesseract
 import mss
 import hashlib
