@@ -9,7 +9,7 @@ from typing import Optional, Dict
 from datetime import datetime, timedelta
 from PIL import Image, ImageOps
 from config import CACHE_EXPIRY_MINUTES
- 
+
 def find_tesseract_path():
     """Find Tesseract installation path."""
     path_from_which = shutil.which("tesseract")

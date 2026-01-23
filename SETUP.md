@@ -3,7 +3,7 @@
 ## Project Structure
 
 ```
-ocr_helper/
+root /
 ├── config.py              # Configuration & constants
 ├── logging_utils.py       # Logging setup
 ├── state.py              # State management & metrics

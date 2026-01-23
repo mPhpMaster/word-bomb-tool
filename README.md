@@ -5,9 +5,12 @@
 ### Screenshots
 
 ![Screenshot 1](Screens/1.png)
+
 *Figure 1: Main interface of the Word Bomb Tool*
 
+
 ![Screenshot 2](Screens/2.png)
+
 *Figure 2: Word suggestion and game interaction*
 
 ### Video
