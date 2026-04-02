@@ -1,4 +1,4 @@
-strCommand = "python ./main.py"
+strCommand = "cmd /c python ./main.py"
 
 For Each Arg In WScript.Arguments
     strCommand = strCommand & " """ & replace(Arg, """", """""""""") & """"
