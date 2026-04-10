@@ -1,0 +1,2 @@
+# Optional: only needed to build Windows .exe files (see build_exe.bat)
+pyinstaller>=6.0

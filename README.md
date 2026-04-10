@@ -24,7 +24,7 @@
 - **Select Region**: Press `TAB` to select a region.
 - **Auto Mode**: Press `F1` to toggle auto mode.
 - **Exit Program**: Press `Ctrl+C` to exit the program.
-- **Show/Hide window**: Press `Caps Lock` to toggle the log window.
+- **Show/Hide window**: Press `Caps Lock` to toggle the log window and the selected region outline together.
 - **Show/Hide help**: Press `.` to toggle the help window.
 - **Change Search Mode**: Press `Page Up` to change the search mode.
 - **Change Sort Mode**: Press `Page Down` to change the sort mode.
@@ -73,6 +73,8 @@ pip install -r requirements.txt
 
 ## Usage
 
+### GUI (hotkeys, OCR, tray)
+
 1. Run the script:
 
 ```bash
@@ -92,6 +94,48 @@ run.sh
 ```
 
 or just double-click on [run.vbs](run.vbs).
+
+### CLI (no GUI — suggestions & definitions only)
+
+Uses the same Datamuse logic as the desktop app; no Tesseract or keyboard hooks required.
+
+```bash
+python cli.py suggest LETTERS [--mode MODE] [--sort SORT] [--limit N]
+python cli.py define WORD
+python cli.py modes
+```
+
+Examples:
+
+```bash
+python cli.py suggest abc --mode starts-with --sort shortest -n 10
+python cli.py define puzzle --json
+```
+
+On Windows you can use `run-cli.bat` the same way (pass arguments after the batch name).
+
+### Windows executables (PyInstaller)
+
+From the project folder, install build tools and produce two one-file programs in `dist\`:
+
+```powershell
+build_exe.bat
+```
+
+This installs `requirements.txt` plus `requirements-build.txt` (PyInstaller), then builds:
+
+- `dist\WordBombGUI.exe` — same as `python main.py` (still needs [Tesseract](https://github.com/tesseract-ocr/tesseract) installed separately for OCR).
+- `dist\WordBombCLI.exe` — same as `python cli.py ...` (pass subcommands after the executable, e.g. `WordBombCLI.exe suggest cat -n 5`).
+
+Config, logs, and `ocr_metrics.json` are written next to the `.exe` you run.
+
+Manual build:
+
+```powershell
+pip install -r requirements.txt -r requirements-build.txt
+pyinstaller --noconfirm --clean word-bomb-gui.spec
+pyinstaller --noconfirm word-bomb-cli.spec
+```
 
 
 ## Troubleshooting

@@ -1,6 +1,8 @@
 # ui_manager.py - UI components and overlays
 
 import threading
+from typing import Callable, Optional
+
 import tkinter as tk
 from tkinter import ttk
 from config import THEME, SEARCH_MODES, SORT_MODES
@@ -12,6 +14,7 @@ class RegionOverlay(threading.Thread):
         super().__init__()
         self.daemon = True
         self._region = None
+        self._bundle_visible = True
         self.ready = threading.Event()
         self.start()
 
@@ -29,6 +32,27 @@ class RegionOverlay(threading.Thread):
         self.ready.set()
         self.root.mainloop()
 
+    def _apply_region_geometry(self):
+        if not self._region:
+            return
+        x, y = self._region["left"], self._region["top"]
+        w, h = self._region["width"], self._region["height"]
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
+        self.canvas.coords("border", 2, 2, w - 2, h - 2)
+
+    def set_bundle_visible(self, visible: bool):
+        """Show or hide the overlay with the log window; keeps the selected region data."""
+        self.ready.wait()
+        self._bundle_visible = visible
+        if not self._region:
+            self.root.withdraw()
+            return
+        self._apply_region_geometry()
+        if visible:
+            self.root.deiconify()
+        else:
+            self.root.withdraw()
+
     def show_region(self, new_region):
         """Display region or hide if new_region is None."""
         self.ready.wait()
@@ -37,11 +61,11 @@ class RegionOverlay(threading.Thread):
             self.root.withdraw()
             return
 
-        x, y = self._region["left"], self._region["top"]
-        w, h = self._region["width"], self._region["height"]
-        self.root.geometry(f"{w}x{h}+{x}+{y}")
-        self.canvas.coords("border", 2, 2, w - 2, h - 2)
-        self.root.deiconify()
+        self._apply_region_geometry()
+        if self._bundle_visible:
+            self.root.deiconify()
+        else:
+            self.root.withdraw()
 
 class RegionSelector:
     """Interactive region selection UI."""
@@ -102,11 +126,17 @@ class RegionSelector:
 class LogDisplay(threading.Thread):
     """Main UI window with logging and controls."""
     
-    def __init__(self, log_queue, callbacks: dict):
+    def __init__(
+        self,
+        log_queue,
+        callbacks: dict,
+        on_visibility_changed: Optional[Callable[[bool], None]] = None,
+    ):
         super().__init__()
         self.daemon = True
         self.log_queue = log_queue
         self.callbacks = callbacks
+        self.on_visibility_changed = on_visibility_changed
         self.root = None
         self.text_widget = None
         self.visible = True
@@ -157,6 +187,14 @@ class LogDisplay(threading.Thread):
             sort_menu.add_radiobutton(label=mode,
                                      command=lambda i=i: self.callbacks['set_sort_mode'](i))
         
+        options_menu.add_command(
+            label="Typing delay...",
+            command=self.callbacks["set_typing_delay"],
+        )
+        options_menu.add_command(
+            label="OCR interval...",
+            command=self.callbacks["set_ocr_interval"],
+        )
         options_menu.add_separator()
         options_menu.add_command(label="Clear Typed History", 
                                 command=self.callbacks['clear_history'], accelerator="Delete")
@@ -205,8 +243,14 @@ class LogDisplay(threading.Thread):
                 self.root.deiconify()
                 self.root.lift()
                 self.root.focus_force()
+                self.visible = True
+                if self.on_visibility_changed:
+                    self.on_visibility_changed(True)
             else:
                 self.root.withdraw()
+                self.visible = False
+                if self.on_visibility_changed:
+                    self.on_visibility_changed(False)
         except tk.TclError:
             # Handle case where window was already destroyed
             pass

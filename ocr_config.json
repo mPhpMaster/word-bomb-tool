@@ -1,11 +1,13 @@
 {
   "region": {
-    "left": 445,
-    "top": 438,
-    "width": 493,
-    "height": 67
+    "left": 912,
+    "top": 190,
+    "width": 97,
+    "height": 38
   },
-  "current_mode_index": 0,
+  "current_mode_index": 2,
   "current_sort_mode_index": 2,
-  "total_typed_count": 0
+  "total_typed_count": 75,
+  "typing_delay": 0.1,
+  "ocr_interval": 1.0
 }

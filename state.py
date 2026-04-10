@@ -4,7 +4,14 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Set
 from dataclasses import dataclass, field
-from config import CONFIG_FILE, METRICS_FILE
+from config import (
+    CONFIG_FILE,
+    METRICS_FILE,
+    TYPING_DELAY,
+    OCR_INTERVAL,
+    clamp_typing_delay,
+    clamp_ocr_interval,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +50,8 @@ class AppState:
     typed_words_history: Set[str] = field(default_factory=set)
     typing_records: List[TypingRecord] = field(default_factory=list)
     total_typed_count: int = 0
+    typing_delay: float = TYPING_DELAY
+    ocr_interval: float = OCR_INTERVAL
     api_status: str = "[OK] Online"
     metrics: AppMetrics = field(default_factory=AppMetrics)
 
@@ -125,6 +134,8 @@ class StateManager:
                     "current_mode_index": self.state.current_mode_index,
                     "current_sort_mode_index": self.state.current_sort_mode_index,
                     "total_typed_count": self.state.total_typed_count,
+                    "typing_delay": self.state.typing_delay,
+                    "ocr_interval": self.state.ocr_interval,
                 }
             with open(CONFIG_FILE, 'w') as f:
                 json.dump(config, f, indent=2)
@@ -133,22 +144,44 @@ class StateManager:
             logger.error(f"Error saving config: {e}")
 
     def load_state(self):
-        """Load state from config file."""
+        """Load persisted settings from ocr_config.json (region, modes, counts, typing_delay, ocr_interval)."""
         try:
             with open(CONFIG_FILE, 'r') as f:
                 config = json.load(f)
-
-            with self._lock:
-                self.state.region = config.get("region")
-                self.state.current_mode_index = config.get("current_mode_index", 2)
-                self.state.current_sort_mode_index = config.get("current_sort_mode_index", 2)
-                self.state.total_typed_count = config.get("total_typed_count", 0)
-
+            self._apply_config_file(config)
             logger.info("Configuration loaded from file")
         except FileNotFoundError:
             logger.info("No config file found, using defaults")
         except Exception as e:
             logger.error(f"Error loading config: {e}")
+
+    def _apply_config_file(self, config: dict) -> None:
+        """Apply values from a loaded JSON dict; missing keys keep current defaults."""
+        with self._lock:
+            if "region" in config:
+                self.state.region = config["region"]
+            try:
+                self.state.current_mode_index = int(
+                    config.get("current_mode_index", self.state.current_mode_index)
+                )
+            except (TypeError, ValueError):
+                pass
+            try:
+                self.state.current_sort_mode_index = int(
+                    config.get("current_sort_mode_index", self.state.current_sort_mode_index)
+                )
+            except (TypeError, ValueError):
+                pass
+            try:
+                self.state.total_typed_count = int(
+                    config.get("total_typed_count", self.state.total_typed_count)
+                )
+            except (TypeError, ValueError):
+                pass
+            if "typing_delay" in config:
+                self.state.typing_delay = clamp_typing_delay(config["typing_delay"])
+            if "ocr_interval" in config:
+                self.state.ocr_interval = clamp_ocr_interval(config["ocr_interval"])
 
     def save_metrics(self):
         """Save metrics to file."""

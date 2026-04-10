@@ -12,7 +12,10 @@ from concurrent.futures import ThreadPoolExecutor
 # Import modules
 from config import (
     SEARCH_MODES, SORT_MODES, MAX_WORKER_THREADS,
-    TESSERACT_INSTALLER_URL, UNDO_BUFFER_SIZE, MAX_TYPED_HISTORY
+    TESSERACT_INSTALLER_URL, TESSERACT_INSTALLER_PATH,
+    TYPING_DELAY_MIN, TYPING_DELAY_MAX,
+    OCR_INTERVAL_MIN, OCR_INTERVAL_MAX,
+    UNDO_BUFFER_SIZE, MAX_TYPED_HISTORY,
 )
 from logging_utils import setup_logging, LogQueue
 from state import StateManager
@@ -21,7 +24,7 @@ from api_client import DatamuseClient
 from suggestion_manager import SuggestionManager
 from ui_manager import RegionOverlay, RegionSelector, LogDisplay, HelpWindow, DefinitionPopup
 from tray_manager import TrayIcon
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 import tkinter as tk
 
 logger = logging.getLogger(__name__)
@@ -58,6 +61,8 @@ class OCRApplication:
             'toggle_window': lambda: self.log_display.toggle_visibility(),
             'fetch_suggestions': self.handle_shift_press,
             'fetch_definitions': self.handle_alt_1_press,
+            'set_typing_delay': self.set_typing_delay,
+            'set_ocr_interval': self.set_ocr_interval,
             'exit': self.graceful_exit,
         }
     
@@ -79,6 +84,8 @@ class OCRApplication:
         return f"""
 Current Mode: {mode}
 Current Sort: {sort_mode}
+Typing delay: {state.typing_delay}s (per character)
+OCR interval: {state.ocr_interval}s (auto mode poll)
 Auto Mode: {'On' if state.auto_mode_active else 'Off'}
 Words Typed: {state.total_typed_count}
 API Status: {state.api_status}
@@ -99,7 +106,7 @@ Change Sort Mode:   Page Down
 
 Clear History:      Delete
 Undo Last Word:     Ctrl+Z
-Toggle This Log:    Caps Lock
+Toggle Log + Region: Caps Lock
 Toggle Auto Mode:   F1
 
 Show This Window:   . (period)
@@ -109,13 +116,28 @@ Quit Application:   Ctrl+C
     def handle_shift_press(self):
         """WBT and fetch suggestions."""
         state = self.state_manager.get_state()
+        resume_auto = False
+        if state.auto_mode_active:
+            self.state_manager.update_state(auto_mode_active=False)
+            resume_auto = True
+
         if not state.region:
             self.log("Cannot perform WBT: No region selected.", "ERROR")
             self.select_region()
+            if resume_auto:
+                self.state_manager.update_state(auto_mode_active=True)
             return
-        
-        self.executor.submit(self._handle_shift_async)
-    
+
+        self.executor.submit(self._handle_shift_async_with_auto_resume, resume_auto)
+
+    def _handle_shift_async_with_auto_resume(self, resume_auto: bool):
+        """Run Shift WBT flow; if auto was suspended for this Shift, turn it back on when done."""
+        try:
+            self._handle_shift_async()
+        finally:
+            if resume_auto:
+                self.state_manager.update_state(auto_mode_active=True)
+
     def _handle_shift_async(self):
         """Async WBT handler."""
         state = self.state_manager.get_state()
@@ -134,31 +156,32 @@ Quit Application:   Ctrl+C
         mode = SEARCH_MODES[state.current_mode_index]
         
         if letters == state.last_ocr_text and state.suggestions:
-            # Same text, type next word
+            # Same text, type next word only (do not fall through — that would type twice).
             self.type_next_word()
+            return
+
+        # New text, fetch suggestions then type first/next candidate
+        self.state_manager.update_state(last_ocr_text=letters)
+        self.log(f"--- WBT: {letters} ---")
+
+        suggestions = self.api_client.get_suggestions(letters, mode)
+        self.state_manager.update_state(api_status=self.api_client.status)
+
+        if suggestions:
+            suggestions = SuggestionManager.sort_suggestions(
+                suggestions,
+                SORT_MODES[state.current_sort_mode_index]
+            )
+            self.state_manager.update_state(suggestions=suggestions, suggestion_index=0)
+
+            self.log(f"Found {len(suggestions)} suggestions.")
+            for i, suggestion in enumerate(suggestions[:3]):
+                self.log(f"\t{i+1}. {suggestion}")
+            self.log((f"\n... and {len(suggestions) - 3} more"
+                     if len(suggestions) > 3 else ""))
         else:
-            # New text, fetch suggestions
-            self.state_manager.update_state(last_ocr_text=letters)
-            self.log(f"--- WBT: {letters} ---")
-            
-            suggestions = self.api_client.get_suggestions(letters, mode)
-            self.state_manager.update_state(api_status=self.api_client.status)
-            
-            if suggestions:
-                suggestions = SuggestionManager.sort_suggestions(
-                    suggestions,
-                    SORT_MODES[state.current_sort_mode_index]
-                )
-                self.state_manager.update_state(suggestions=suggestions, suggestion_index=0)
-                
-                self.log(f"Found {len(suggestions)} suggestions.")
-                for i, suggestion in enumerate(suggestions[:10]):
-                    self.log(f"\t{i+1}. {suggestion}")
-                self.log((f"\n... and {len(suggestions) - 10} more"
-                         if len(suggestions) > 10 else ""))
-            else:
-                self.state_manager.update_state(suggestions=[], suggestion_index=0)
-        
+            self.state_manager.update_state(suggestions=[], suggestion_index=0)
+
         self.type_next_word()
      
     def handle_alt_1_press(self):
@@ -218,8 +241,10 @@ Quit Application:   Ctrl+C
             self.log("All available suggestions have been typed.", "WARNING")
             return
         
+        time.sleep(state.ocr_interval)
+        delay = state.typing_delay
         self.log(f"Typing: '{word}'")
-        keyboard.write(word, delay=0.08)
+        keyboard.write(word, delay=delay)
         keyboard.press_and_release('enter')
         
         # Record typing
@@ -264,6 +289,48 @@ Quit Application:   Ctrl+C
         self.log(f"Current Mode: {SEARCH_MODES[mode_index]}")
         self.state_manager.save_state()
     
+    def set_typing_delay(self):
+        """Prompt for typing delay (seconds per character) and save to ocr_config.json."""
+        if not self.log_display or not self.log_display.root:
+            return
+        parent = self.log_display.root
+        state = self.state_manager.get_state()
+        val = simpledialog.askfloat(
+            "Typing delay",
+            f"Delay between each typed character (seconds).\n"
+            f"Allowed range: {TYPING_DELAY_MIN} to {TYPING_DELAY_MAX}",
+            minvalue=TYPING_DELAY_MIN,
+            maxvalue=TYPING_DELAY_MAX,
+            initialvalue=round(state.typing_delay, 4),
+            parent=parent,
+        )
+        if val is None:
+            return
+        self.state_manager.update_state(typing_delay=val)
+        self.state_manager.save_state()
+        self.log(f"Typing delay set to {val} s per character.")
+
+    def set_ocr_interval(self):
+        """Prompt for auto-mode OCR poll interval and save to ocr_config.json."""
+        if not self.log_display or not self.log_display.root:
+            return
+        parent = self.log_display.root
+        state = self.state_manager.get_state()
+        val = simpledialog.askfloat(
+            "OCR interval",
+            "Seconds between OCR checks in auto mode (F1).\n"
+            f"Allowed range: {OCR_INTERVAL_MIN} to {OCR_INTERVAL_MAX}",
+            minvalue=OCR_INTERVAL_MIN,
+            maxvalue=OCR_INTERVAL_MAX,
+            initialvalue=round(state.ocr_interval, 4),
+            parent=parent,
+        )
+        if val is None:
+            return
+        self.state_manager.update_state(ocr_interval=val)
+        self.state_manager.save_state()
+        self.log(f"OCR interval set to {val} s.")
+
     def set_sort_mode(self, mode_index: int):
         """Set sort mode."""
         state = self.state_manager.get_state()
@@ -311,7 +378,6 @@ Quit Application:   Ctrl+C
         
         if new_state:
             self.log("Auto mode ENABLED.")
-            self.executor.submit(self.auto_mode_watcher)
         else:
             self.log("Auto mode DISABLED.")
     
@@ -320,14 +386,15 @@ Quit Application:   Ctrl+C
         last_text = None
         while True:
             state = self.state_manager.get_state()
+            poll = state.ocr_interval
             if not state.auto_mode_active:
-                time.sleep(1)
+                time.sleep(poll)
                 continue
-            
+
             if not state.region:
-                time.sleep(1)
+                time.sleep(poll)
                 continue
-            
+
             try:
                 letters = self.ocr_processor.perform_ocr(state.region)
                 if letters and letters != last_text:
@@ -338,8 +405,9 @@ Quit Application:   Ctrl+C
                 logger.error(f"Auto mode error: {e}", exc_info=True)
                 self.log(f"[AUTO ERROR]: {str(e)}", "ERROR")
                 time.sleep(2)
-            
-            time.sleep(1)
+                continue
+
+            time.sleep(poll)
     
     def show_help_window(self):
         """Show help window."""
@@ -429,12 +497,12 @@ Quit Application:   Ctrl+C
         try:
             self.log("Downloading Tesseract...")
             with requests.get(TESSERACT_INSTALLER_URL, stream=True) as r:
-                with open("tesseract_installer.exe", 'wb') as f:
+                with open(TESSERACT_INSTALLER_PATH, "wb") as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         f.write(chunk)
             
             self.log("Running installer...")
-            subprocess.run(["tesseract_installer.exe"], check=True)
+            subprocess.run([TESSERACT_INSTALLER_PATH], check=True)
             self.log("Restarting...")
             os.execv(sys.executable, ['python'] + sys.argv)
         except Exception as e:
@@ -452,7 +520,13 @@ Quit Application:   Ctrl+C
         
         # Initialize UI
         self.region_overlay = RegionOverlay()
-        self.log_display = LogDisplay(self.log_queue, self.callbacks)
+        self.log_display = LogDisplay(
+            self.log_queue,
+            self.callbacks,
+            on_visibility_changed=lambda vis: self.region_overlay.set_bundle_visible(vis)
+            if self.region_overlay
+            else None,
+        )
         time.sleep(0.5)  # Let UI initialize
         
         self.log("========== WBT STARTED ==========")
@@ -481,7 +555,11 @@ Quit Application:   Ctrl+C
         keyboard.add_hotkey('.', self.show_help_window)
         keyboard.add_hotkey('ctrl+z', self.undo_last_word)
         keyboard.add_hotkey('ctrl+c', lambda: self.graceful_exit(0))
-        
+
+        # One watcher thread for the whole session; F1 only toggles auto_mode_active.
+        # Submitting a new watcher on each enable would stack loops and duplicate OCR/typing.
+        self.executor.submit(self.auto_mode_watcher)
+
         self._setup_tray_icon()
         keyboard.wait()
     
