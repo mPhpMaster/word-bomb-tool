@@ -1,6 +1,7 @@
 ﻿import sys
 import os
 import time
+import random
 import keyboard
 import logging
 import shutil
@@ -28,6 +29,33 @@ from tkinter import messagebox, simpledialog
 import tkinter as tk
 
 logger = logging.getLogger(__name__)
+
+
+def _type_word_human_like(word: str, base_delay: float) -> None:
+    """
+    Type a word with variable gaps between keys so rhythm is not perfectly metronomic.
+    base_delay is the typical seconds between keystrokes (same meaning as the old fixed delay).
+    """
+    if not word:
+        return
+    if base_delay <= 0:
+        keyboard.write(word, delay=0)
+        return
+
+    low = max(0.001, base_delay * 0.48)
+    high = min(TYPING_DELAY_MAX, base_delay * 1.72)
+    mode = min(max(base_delay, low), high)
+
+    for i, ch in enumerate(word):
+        keyboard.write(ch)
+        if i >= len(word) - 1:
+            break
+        # Occasional slightly longer gap (hesitation), still rare enough to feel natural.
+        if random.random() < 0.07:
+            time.sleep(random.uniform(0.035, 0.11))
+        dt = random.triangular(low, high, mode)
+        time.sleep(dt)
+
 
 class OCRApplication:
     """Main application class."""
@@ -84,7 +112,7 @@ class OCRApplication:
         return f"""
 Current Mode: {mode}
 Current Sort: {sort_mode}
-Typing delay: {state.typing_delay}s (per character)
+Typing delay: {state.typing_delay}s (~avg between keys)
 OCR interval: {state.ocr_interval}s (auto mode poll)
 Auto Mode: {'On' if state.auto_mode_active else 'Off'}
 Words Typed: {state.total_typed_count}
@@ -244,7 +272,8 @@ Quit Application:   Ctrl+C
         time.sleep(state.ocr_interval)
         delay = state.typing_delay
         self.log(f"Typing: '{word}'")
-        keyboard.write(word, delay=delay)
+        _type_word_human_like(word, delay)
+        time.sleep(random.uniform(0.02, 0.09))
         keyboard.press_and_release('enter')
         
         # Record typing
@@ -297,7 +326,7 @@ Quit Application:   Ctrl+C
         state = self.state_manager.get_state()
         val = simpledialog.askfloat(
             "Typing delay",
-            f"Delay between each typed character (seconds).\n"
+            f"Typical delay between keystrokes in seconds (timing varies slightly).\n"
             f"Allowed range: {TYPING_DELAY_MIN} to {TYPING_DELAY_MAX}",
             minvalue=TYPING_DELAY_MIN,
             maxvalue=TYPING_DELAY_MAX,
