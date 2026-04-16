@@ -1,13 +1,19 @@
 {
   "region": {
-    "left": 912,
-    "top": 190,
-    "width": 97,
+    "left": 904,
+    "top": 160,
+    "width": 96,
     "height": 38
+  },
+  "turn_region": {
+    "left": 908,
+    "top": 201,
+    "width": 87,
+    "height": 37
   },
   "current_mode_index": 2,
   "current_sort_mode_index": 2,
-  "total_typed_count": 75,
+  "total_typed_count": 115,
   "typing_delay": 0.1,
   "ocr_interval": 1.0
 }

@@ -39,6 +39,8 @@ class AppMetrics:
 class AppState:
     """Central application state."""
     region: Optional[Dict] = None
+    # Optional second region: OCR must show YOUR TURN (both "your" and "turn" in alnum text) for auto mode.
+    turn_region: Optional[Dict] = None
     suggestions: List[str] = field(default_factory=list)
     definitions: List[str] = field(default_factory=list)
     last_ocr_text: Optional[str] = None
@@ -131,6 +133,7 @@ class StateManager:
             with self._lock:
                 config = {
                     "region": self.state.region,
+                    "turn_region": self.state.turn_region,
                     "current_mode_index": self.state.current_mode_index,
                     "current_sort_mode_index": self.state.current_sort_mode_index,
                     "total_typed_count": self.state.total_typed_count,
@@ -160,6 +163,8 @@ class StateManager:
         with self._lock:
             if "region" in config:
                 self.state.region = config["region"]
+            if "turn_region" in config:
+                self.state.turn_region = config["turn_region"]
             try:
                 self.state.current_mode_index = int(
                     config.get("current_mode_index", self.state.current_mode_index)

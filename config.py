@@ -40,9 +40,14 @@ OCR_INTERVAL = 0.5
 OCR_INTERVAL_MIN = 0.1
 OCR_INTERVAL_MAX = 10.0
 OCR_TIMEOUT = 1
-TYPING_DELAY = 0.1
+# Default ~human casual typing; Options can tune (typical comfortable range ~0.22–0.42).
+TYPING_DELAY = 0.28
 TYPING_DELAY_MIN = 0.01
 TYPING_DELAY_MAX = 2.0
+
+# Auto mode: turn_region OCR (letters+digits, lower) must contain both for "YOUR TURN" / yourturn.
+TURN_GATE_NEED_YOUR = "your"
+TURN_GATE_NEED_TURN = "turn"
 
 
 def clamp_ocr_interval(value) -> float:

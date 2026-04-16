@@ -8,12 +8,13 @@ from tkinter import ttk
 from config import THEME, SEARCH_MODES, SORT_MODES
 
 class RegionOverlay(threading.Thread):
-    """Displays selected WBT region overlay."""
+    """Displays selected WBT region overlay (letters) and optional turn-gate region (green)."""
     
     def __init__(self):
         super().__init__()
         self.daemon = True
         self._region = None
+        self._turn_region = None
         self._bundle_visible = True
         self.ready = threading.Event()
         self.start()
@@ -29,6 +30,17 @@ class RegionOverlay(threading.Thread):
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.canvas.create_rectangle(0, 0, 0, 0, outline=THEME["accent"], width=2, tags="border")
 
+        self.turn_win = tk.Toplevel(self.root)
+        self.turn_win.withdraw()
+        self.turn_win.attributes("-topmost", True)
+        self.turn_win.attributes("-alpha", 0.4)
+        self.turn_win.overrideredirect(True)
+        self.turn_canvas = tk.Canvas(self.turn_win, bg=THEME["bg"], highlightthickness=0)
+        self.turn_canvas.pack(fill=tk.BOTH, expand=True)
+        self.turn_canvas.create_rectangle(
+            0, 0, 0, 0, outline=THEME["success"], width=2, tags="turn_border"
+        )
+
         self.ready.set()
         self.root.mainloop()
 
@@ -40,28 +52,56 @@ class RegionOverlay(threading.Thread):
         self.root.geometry(f"{w}x{h}+{x}+{y}")
         self.canvas.coords("border", 2, 2, w - 2, h - 2)
 
+    def _apply_turn_region_geometry(self):
+        if not self._turn_region:
+            return
+        x, y = self._turn_region["left"], self._turn_region["top"]
+        w, h = self._turn_region["width"], self._turn_region["height"]
+        self.turn_win.geometry(f"{w}x{h}+{x}+{y}")
+        self.turn_canvas.coords("turn_border", 2, 2, w - 2, h - 2)
+
     def set_bundle_visible(self, visible: bool):
         """Show or hide the overlay with the log window; keeps the selected region data."""
         self.ready.wait()
         self._bundle_visible = visible
         if not self._region:
             self.root.withdraw()
-            return
-        self._apply_region_geometry()
-        if visible:
-            self.root.deiconify()
+            self.turn_win.withdraw()
         else:
-            self.root.withdraw()
+            self._apply_region_geometry()
+            if visible:
+                self.root.deiconify()
+            else:
+                self.root.withdraw()
+        if self._turn_region:
+            self._apply_turn_region_geometry()
+            if visible:
+                self.turn_win.deiconify()
+            else:
+                self.turn_win.withdraw()
+        else:
+            self.turn_win.withdraw()
 
-    def show_region(self, new_region):
-        """Display region or hide if new_region is None."""
+    def show_region(self, new_region, turn_region=None):
+        """Display letter region (blue outline) and optional turn gate region (green)."""
         self.ready.wait()
         self._region = new_region
+        self._turn_region = turn_region
         if not self._region:
             self.root.withdraw()
+            self.turn_win.withdraw()
             return
 
         self._apply_region_geometry()
+        if self._turn_region:
+            self._apply_turn_region_geometry()
+            if self._bundle_visible:
+                self.turn_win.deiconify()
+            else:
+                self.turn_win.withdraw()
+        else:
+            self.turn_win.withdraw()
+
         if self._bundle_visible:
             self.root.deiconify()
         else:
@@ -173,6 +213,12 @@ class LogDisplay(threading.Thread):
         
         options_menu.add_command(label="Select Region", 
                                 command=self.callbacks['select_region'], accelerator="Tab")
+        if self.callbacks.get("clear_turn_region"):
+            options_menu.add_command(
+                label="Clear turn region",
+                command=self.callbacks["clear_turn_region"],
+                accelerator="Ctrl+F2",
+            )
         options_menu.add_separator()
         
         search_menu = tk.Menu(options_menu, tearoff=0)
