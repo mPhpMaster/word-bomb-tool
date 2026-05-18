@@ -1,19 +1,19 @@
 {
   "region": {
-    "left": 904,
-    "top": 160,
-    "width": 96,
-    "height": 38
+    "left": 750,
+    "top": 196,
+    "width": 79,
+    "height": 35
   },
   "turn_region": {
-    "left": 908,
-    "top": 201,
-    "width": 87,
-    "height": 37
+    "left": 751,
+    "top": 233,
+    "width": 84,
+    "height": 32
   },
-  "current_mode_index": 2,
-  "current_sort_mode_index": 2,
-  "total_typed_count": 115,
-  "typing_delay": 0.1,
-  "ocr_interval": 1.0
+  "current_mode_index": 3,
+  "current_sort_mode_index": 1,
+  "total_typed_count": 37,
+  "typing_delay": 0.03,
+  "ocr_interval": 0.1
 }

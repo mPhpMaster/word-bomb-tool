@@ -129,6 +129,41 @@ This installs `requirements.txt` plus `requirements-build.txt` (PyInstaller), th
 
 Config, logs, and `ocr_metrics.json` are written next to the `.exe` you run.
 
+### Windows installer (Inno Setup)
+
+After building the executables, create a Windows installer package with Inno Setup 6:
+
+```powershell
+build_installer.ps1
+```
+
+or:
+
+```cmd
+build_installer.bat
+```
+
+The installer output is:
+
+- `dist\WordBombTool-Setup.exe`
+
+It installs:
+
+- `WordBombGUI.exe`
+- `WordBombCLI.exe`
+- `ocr_config.json`
+- `LICENSE`
+- `README.md`
+- shortcuts for `WordBombGUI.exe` and `WordBombCLI.exe`
+
+If `ISCC.exe` is not found, install Inno Setup 6 and ensure the compiler is available on `PATH`.
+
+Manual installer build (after `build_exe.bat`):
+
+```powershell
+ISCC.exe /Qp word-bomb-installer.iss
+```
+
 Manual build:
 
 ```powershell
