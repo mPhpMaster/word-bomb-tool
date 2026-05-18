@@ -3,4 +3,3 @@ keyboard
 pytesseract
 mss
 Pillow
-pywin32
