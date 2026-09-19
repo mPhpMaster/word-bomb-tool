@@ -49,7 +49,13 @@ class DatamuseClient:
             response.raise_for_status()
             
             data = response.json()
-            suggestions = [item["word"] for item in data if len(item["word"].split()) == 1]
+            # Single words only, and never the prompt letters themselves: Datamuse often
+            # returns the query as the top hit (e.g. "hea" for *hea*), which is not a word.
+            prompt = letters.strip().lower()
+            suggestions = [
+                item["word"] for item in data
+                if len(item["word"].split()) == 1 and item["word"].strip().lower() != prompt
+            ]
             suggestions = suggestions[:MAX_SUGGESTIONS_DISPLAY]
             
             self.status = STATUS_ONLINE
