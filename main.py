@@ -85,6 +85,16 @@ class OCRApplication:
         # When True, auto_mode_watcher clears its last-seen letters (fix F1 re-enable with same prompt).
         self._auto_watcher_reset = False
 
+        # Serializes whole OCR -> fetch -> type actions (Shift, Alt+1, auto mode) so two
+        # actions never type at the same time (interleaved keys like "llikike").
+        # Later commands wait for the running one to finish.
+        self._action_lock = threading.Lock()
+        # Manual (Shift) actions queued or running; auto mode stays out of the way meanwhile.
+        self._pending_manual = 0
+        self._pending_lock = threading.Lock()
+        # Letters most recently handled by any action; auto mode skips these.
+        self._last_handled_letters = None
+
         self._setup_callbacks()
 
     def _setup_callbacks(self):
@@ -197,29 +207,39 @@ Quit Application:   Ctrl+C
                 self.state_manager.update_state(auto_mode_active=True)
             return
 
+        with self._pending_lock:
+            self._pending_manual += 1
         self.executor.submit(self._handle_shift_async_with_auto_resume, resume_auto)
 
     def _handle_shift_async_with_auto_resume(self, resume_auto: bool):
         try:
-            self._handle_shift_async("shift")
+            with self._action_lock:
+                self._handle_shift_async("shift")
         finally:
+            with self._pending_lock:
+                self._pending_manual -= 1
             if resume_auto:
                 self.state_manager.update_state(auto_mode_active=True)
 
-    def _handle_shift_async(self, typing_source: str = "shift"):
-        """Fetch letters from region, get suggestions, type first/next word and Enter (Shift or auto)."""
+    def _handle_shift_async(self, typing_source: str = "shift", letters: str = None):
+        """
+        Fetch letters from region, get suggestions, type first/next word and Enter (Shift or auto).
+        Caller must hold self._action_lock. Pass letters to reuse an OCR result already taken.
+        """
         state = self.state_manager.get_state()
         region = state.region
         if not region:
             return
 
         self.log("Processing WBT...")
-        letters = self.ocr_processor.perform_ocr(region)
+        if not letters:
+            letters = self.ocr_processor.perform_ocr(region)
 
         if not letters:
             self.log("WBT returned no characters.", "WARNING")
             return
 
+        self._last_handled_letters = letters
         state = self.state_manager.get_state()
         mode = SEARCH_MODES[state.current_mode_index]
 
@@ -268,13 +288,15 @@ Quit Application:   Ctrl+C
             return
 
         self.log("Processing WBT...")
-        word = self.ocr_processor.perform_ocr(region)
+        # Wait for any running action; only hold the lock for OCR + fetch, not the popup.
+        with self._action_lock:
+            word = self.ocr_processor.perform_ocr(region)
+            definitions = self.api_client.get_definitions(word) if word else None
 
         if not word:
             self.log("WBT returned no definitions.", "WARNING")
             return
 
-        definitions = self.api_client.get_definitions(word)
         self.state_manager.update_state(api_status=self.api_client.status)
 
         if definitions:
@@ -482,7 +504,6 @@ Quit Application:   Ctrl+C
 
     def auto_mode_watcher(self):
         """Watch for region changes in auto mode (background thread)."""
-        last_text = None
         last_warn_empty = 0.0
         last_warn_gate = 0.0
         while True:
@@ -498,7 +519,12 @@ Quit Application:   Ctrl+C
 
             if self._auto_watcher_reset:
                 self._auto_watcher_reset = False
-                last_text = None
+                self._last_handled_letters = None
+
+            # A Shift action is queued/running: let it finish instead of racing it.
+            if self._pending_manual > 0:
+                time.sleep(poll)
+                continue
 
             try:
                 region = dict(state.region)
@@ -514,7 +540,7 @@ Quit Application:   Ctrl+C
                     time.sleep(poll)
                     continue
 
-                if letters != last_text:
+                if letters != self._last_handled_letters:
                     gate_ok, turn_ocr = self._auto_mode_turn_ok()
                     if not gate_ok:
                         if state.turn_region and now - last_warn_gate > 8.0:
@@ -525,9 +551,17 @@ Quit Application:   Ctrl+C
                             last_warn_gate = now
                         time.sleep(poll)
                         continue
-                    self.log(f"Auto-detected: '{letters}'")
-                    last_text = letters
-                    self._handle_shift_async("auto")
+                    with self._action_lock:
+                        # Re-check after waiting: Shift may have paused auto mode or
+                        # already typed for these letters.
+                        st = self.state_manager.get_state()
+                        if (
+                            st.auto_mode_active
+                            and self._pending_manual == 0
+                            and letters != self._last_handled_letters
+                        ):
+                            self.log(f"Auto-detected: '{letters}'")
+                            self._handle_shift_async("auto", letters=letters)
             except Exception as e:
                 logger.error(f"Auto mode error: {e}", exc_info=True)
                 self.log(f"[AUTO ERROR]: {str(e)}", "ERROR")

@@ -5,6 +5,7 @@ import os
 import logging
 import shutil
 import time
+import threading
 from typing import Optional, Dict
 from datetime import datetime, timedelta
 from PIL import Image, ImageOps
@@ -53,6 +54,9 @@ class OCRProcessor:
     
     def __init__(self):
         self.cache: Dict[str, tuple] = {}
+        # One OCR at a time: a second caller (Shift, Alt+1, auto watcher, turn gate)
+        # blocks here until the running OCR finishes.
+        self._lock = threading.RLock()
     
     def get_image_hash(self, img_data: bytes) -> str:
         """Generate hash of image data for caching."""
@@ -80,10 +84,16 @@ class OCRProcessor:
     
     def clear_cache(self):
         """Clear WBT cache."""
-        self.cache.clear()
+        with self._lock:
+            self.cache.clear()
         logger.info("WBT cache cleared")
     
     def perform_ocr(self, region: Dict) -> Optional[str]:
+        """Letter OCR; waits for any OCR already in progress."""
+        with self._lock:
+            return self._perform_ocr(region)
+
+    def _perform_ocr(self, region: Dict) -> Optional[str]:
         """
         Perform WBT on region with caching and error handling.
         
@@ -140,6 +150,11 @@ class OCRProcessor:
             return None
 
     def perform_ocr_turn_gate(self, region: Dict) -> Optional[str]:
+        """Turn-gate OCR; waits for any OCR already in progress."""
+        with self._lock:
+            return self._perform_ocr_turn_gate(region)
+
+    def _perform_ocr_turn_gate(self, region: Dict) -> Optional[str]:
         """
         OCR for auto-mode turn detection: letters and digits only, lowercase.
         Uses soft preprocessing + multiple PSM attempts (colored YOUR TURN UI).
