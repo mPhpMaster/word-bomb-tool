@@ -1,6 +1,6 @@
 [Setup]
 AppName=Word Bomb Tool
-AppVersion=1.0
+AppVersion=4.0.2
 AppPublisher=mPhpMaster
 AppPublisherURL=https://github.com/mPhpMaster/word-bomb-tool
 AppSupportURL=https://github.com/mPhpMaster/word-bomb-tool
