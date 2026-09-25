@@ -17,6 +17,7 @@ from config import (
     TYPING_DELAY_MIN, TYPING_DELAY_MAX,
     OCR_INTERVAL_MIN, OCR_INTERVAL_MAX,
     MAX_TYPED_HISTORY,
+    MAX_LETTER_CHANGES,
     TURN_GATE_NEED_YOUR,
     TURN_GATE_NEED_TURN,
 )
@@ -225,6 +226,8 @@ Quit Application:   Ctrl+C
         """
         Fetch letters from region, get suggestions, type first/next word and Enter (Shift or auto).
         Caller must hold self._action_lock. Pass letters to reuse an OCR result already taken.
+        If the letters on screen change before the word is submitted, the stale word is
+        dropped and the new letters are used instead.
         """
         state = self.state_manager.get_state()
         region = state.region
@@ -233,19 +236,28 @@ Quit Application:   Ctrl+C
 
         self.log("Processing WBT...")
         if not letters:
-            letters = self.ocr_processor.perform_ocr(region)
+            letters = self.ocr_processor.perform_ocr_stable(region)
 
         if not letters:
             self.log("WBT returned no characters.", "WARNING")
             return
 
+        for _ in range(MAX_LETTER_CHANGES + 1):
+            new_letters = self._handle_letters(letters, typing_source, region)
+            if not new_letters:
+                return
+            self.log(f"Letters changed on screen: '{letters}' -> '{new_letters}' (using new letters).")
+            letters = new_letters
+        self.log("Letters keep changing on screen; skipped.", "WARNING")
+
+    def _handle_letters(self, letters: str, typing_source: str, region: dict):
+        """Suggest and type a word for letters; returns new letters if they changed on screen."""
         self._last_handled_letters = letters
         state = self.state_manager.get_state()
         mode = SEARCH_MODES[state.current_mode_index]
 
         if letters == state.last_ocr_text and state.suggestions:
-            self.type_next_word(typing_source)
-            return
+            return self.type_next_word(typing_source, region)
 
         self.state_manager.update_state(last_ocr_text=letters)
         self.log(f"--- WBT: {letters} ---")
@@ -268,7 +280,16 @@ Quit Application:   Ctrl+C
         else:
             self.state_manager.update_state(suggestions=[], suggestion_index=0)
 
-        self.type_next_word(typing_source)
+        return self.type_next_word(typing_source, region)
+
+    def _letters_changed(self, region, expected):
+        """Re-read the letters; returns the new letters if they differ from expected, else None."""
+        if not region or not expected:
+            return None
+        current = self.ocr_processor.perform_ocr_stable(region)
+        if current and current != expected:
+            return current
+        return None
 
     def handle_alt_1_press(self):
         """WBT and fetch definitions."""
@@ -290,7 +311,7 @@ Quit Application:   Ctrl+C
         self.log("Processing WBT...")
         # Wait for any running action; only hold the lock for OCR + fetch, not the popup.
         with self._action_lock:
-            word = self.ocr_processor.perform_ocr(region)
+            word = self.ocr_processor.perform_ocr_stable(region)
             definitions = self.api_client.get_definitions(word) if word else None
 
         if not word:
@@ -311,12 +332,17 @@ Quit Application:   Ctrl+C
         def_popup = DefinitionPopup.show(self.log_display.root, word, definitions)
         def_popup.wait_window(def_popup)
 
-    def type_next_word(self, typing_source: str = "shift"):
-        """Type next untyped suggestion."""
+    def type_next_word(self, typing_source: str = "shift", region: dict = None):
+        """
+        Type next untyped suggestion.
+        With a region, the letters are re-read before typing and before Enter; if they
+        changed, the word is not submitted (erased if already typed) and the new
+        letters are returned so the caller can use them instead.
+        """
         state = self.state_manager.get_state()
         if not state.suggestions:
             self.log("No suggestions loaded.", "WARNING")
-            return
+            return None
 
         word, next_idx = SuggestionManager.get_next_untyped_word(
             state.suggestions,
@@ -326,7 +352,7 @@ Quit Application:   Ctrl+C
 
         if not word:
             self.log("All available suggestions have been typed.", "WARNING")
-            return
+            return None
 
         # "Thinking" before hands move (same path for Shift and auto; auto slightly longer).
         if typing_source == "auto":
@@ -334,12 +360,26 @@ Quit Application:   Ctrl+C
         else:
             time.sleep(random.uniform(0.3, 0.72))
 
+        expected = state.last_ocr_text
+        changed = self._letters_changed(region, expected)
+        if changed:
+            return changed
+
         delay = state.typing_delay
         self.log(f"Typing: '{word}'")
         # Slower inter-key timing than raw setting (auto a bit slower than Shift).
         scale = 1.32 if typing_source == "auto" else 1.22
         _type_word_human_like(word, delay, inter_key_scale=scale)
         time.sleep(random.uniform(0.26, 0.62))
+
+        changed = self._letters_changed(region, expected)
+        if changed:
+            self.log(f"Erasing '{word}' (letters changed before Enter).")
+            for _ in word:
+                keyboard.press_and_release('backspace')
+                time.sleep(random.uniform(0.03, 0.08))
+            return changed
+
         keyboard.press_and_release('enter')
 
         state.typed_words_history.add(word)
@@ -353,6 +393,7 @@ Quit Application:   Ctrl+C
             total_typed_count=state.total_typed_count,
             suggestion_index=next_idx
         )
+        return None
 
     def select_region(self):
         """Select letter region, then a second fullscreen picker for YOUR TURN (Esc skips)."""
@@ -541,6 +582,11 @@ Quit Application:   Ctrl+C
                     continue
 
                 if letters != self._last_handled_letters:
+                    # Confirm on consecutive captures so a one-off misread is never typed.
+                    letters = self.ocr_processor.perform_ocr_stable(region)
+                    if not letters or letters == self._last_handled_letters:
+                        time.sleep(poll)
+                        continue
                     gate_ok, turn_ocr = self._auto_mode_turn_ok()
                     if not gate_ok:
                         if state.turn_region and now - last_warn_gate > 8.0:

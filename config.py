@@ -40,6 +40,12 @@ OCR_INTERVAL = 0.5
 OCR_INTERVAL_MIN = 0.1
 OCR_INTERVAL_MAX = 10.0
 OCR_TIMEOUT = 1
+# Letter OCR is only trusted when two captures in a row agree (filters one-off
+# misreads of transition frames). Up to OCR_STABLE_ATTEMPTS captures, OCR_STABLE_GAP s apart.
+OCR_STABLE_ATTEMPTS = 5
+OCR_STABLE_GAP = 0.12
+# How many times one action may switch to newly read letters before giving up.
+MAX_LETTER_CHANGES = 3
 # Default ~human casual typing; Options can tune (typical comfortable range ~0.22–0.42).
 TYPING_DELAY = 0.28
 TYPING_DELAY_MIN = 0.01

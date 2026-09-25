@@ -9,7 +9,7 @@ import threading
 from typing import Optional, Dict
 from datetime import datetime, timedelta
 from PIL import Image, ImageOps
-from config import CACHE_EXPIRY_MINUTES
+from config import CACHE_EXPIRY_MINUTES, OCR_STABLE_ATTEMPTS, OCR_STABLE_GAP
 
 def find_tesseract_path():
     """Find Tesseract installation path."""
@@ -92,6 +92,25 @@ class OCRProcessor:
         """Letter OCR; waits for any OCR already in progress."""
         with self._lock:
             return self._perform_ocr(region)
+
+    def perform_ocr_stable(self, region: Dict, attempts: int = OCR_STABLE_ATTEMPTS,
+                           gap: float = OCR_STABLE_GAP) -> Optional[str]:
+        """
+        Letter OCR that only trusts a reading seen on two captures in a row.
+
+        A single capture can land on a transition frame (letters animating in,
+        the previous prompt fading out) and misread letters that are not really
+        on screen. Returns None when no two consecutive readings agree.
+        """
+        prev = self.perform_ocr(region)
+        for _ in range(max(1, attempts - 1)):
+            time.sleep(gap)
+            cur = self.perform_ocr(region)
+            if cur and cur == prev:
+                return cur
+            prev = cur
+        logger.debug("Letter OCR did not settle on a stable reading")
+        return None
 
     def _perform_ocr(self, region: Dict) -> Optional[str]:
         """
