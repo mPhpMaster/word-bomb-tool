@@ -33,7 +33,7 @@ import windows_ocr
 import word_list
 from api_client import DatamuseClient
 from suggestion_manager import SuggestionManager
-from ui_manager import RegionOverlay, RegionSelector, LogDisplay, HelpWindow, DefinitionPopup
+from ui_manager import RegionOverlay, RegionSelector, LogDisplay, HelpWindow, DefinitionPopup, AboutWindow
 from tray_manager import TrayIcon
 from tkinter import messagebox, simpledialog
 import tkinter as tk
@@ -129,6 +129,7 @@ class OCRApplication:
             'set_typing_delay': self.set_typing_delay,
             'set_ocr_interval': self.set_ocr_interval,
             'toggle_fast_typing': self.toggle_fast_typing,
+            'show_about': self.show_about_window,
             'exit': self.graceful_exit,
         }
 
@@ -714,6 +715,11 @@ Quit Application:   Ctrl+C
 
         self.help_win = HelpWindow.show(self.log_display.root, self.get_help_text())
 
+    def show_about_window(self):
+        """Show the About window (or bring the open one to the front)."""
+        if self.log_display and self.log_display.root:
+            self.log_display.root.after(0, lambda: AboutWindow.show(self.log_display.root))
+
     def _setup_tray_icon(self):
         """Setup system tray icon (optional)."""
         try:
@@ -730,6 +736,7 @@ Quit Application:   Ctrl+C
                 'fetch_definitions': self.callbacks['fetch_definitions'],
                 '-1': None,
                 'toggle_window': self.callbacks['toggle_window'],
+                'about_word_bomb_tool': self.callbacks['show_about'],
                 '-0': None,
                 'exit': self.callbacks['exit'],
             }

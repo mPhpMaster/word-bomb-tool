@@ -2,12 +2,18 @@
 
 import ctypes
 import logging
+import os
 import threading
+import webbrowser
 from typing import Callable, Optional
 
 import tkinter as tk
 from tkinter import ttk
-from config import THEME, SEARCH_MODES, SORT_MODES
+from config import (
+    THEME, SEARCH_MODES, SORT_MODES, BASE_DIR, ASSETS_DIR,
+    APP_NAME, APP_VERSION, APP_DESCRIPTION, APP_AUTHOR, APP_AUTHOR_EMAIL,
+    APP_COPYRIGHT, APP_LICENSE_NAME, APP_REPOSITORY_URL, APP_LINKS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -280,6 +286,8 @@ class LogDisplay(threading.Thread):
 
         help_menu.add_command(label="Show Hotkeys", 
                              command=self.callbacks['show_help'], accelerator=".")
+        help_menu.add_separator()
+        help_menu.add_command(label=f"About {APP_NAME}\u2026", command=self.callbacks['show_about'])
 
         # Text Widget
         self.text_widget = tk.Text(self.root, bg=THEME["log_bg"], fg=THEME["log_fg"],
@@ -417,3 +425,201 @@ class DefinitionPopup:
         """Set the window to be fully opaque."""
         if DefinitionPopup.def_win:
             DefinitionPopup.def_win.attributes("-alpha", THEME["focused_alpha"])
+
+
+class AboutWindow:
+    """About window: author, version, description, links and legal documents."""
+
+    BG = THEME["log_bg"]
+    TEXT = THEME["fg"]
+    MUTED = "#7f848e"
+    LINE = THEME["select_bg"]
+    FONT = "Segoe UI"
+    AVATAR_SIZE = 84
+    ICON_SIZE = 64
+
+    _open = None
+
+    @staticmethod
+    def show(parent_root):
+        """Shows the About window, or brings the open one to the front."""
+        win = AboutWindow._open
+        if win is not None and win.winfo_exists():
+            win.deiconify()
+            win.lift()
+            win.focus_force()
+            return win
+        AboutWindow._open = AboutWindow._build(parent_root)
+        return AboutWindow._open
+
+    @staticmethod
+    def _build(parent_root):
+        from PIL import ImageTk
+
+        c = AboutWindow
+        win = tk.Toplevel(parent_root)
+        win.withdraw()
+        win.title(f"About {APP_NAME}")
+        win.config(bg=c.BG)
+        win.attributes("-topmost", True)
+        win.resizable(False, False)
+        win.bind("<Escape>", lambda e: win.destroy())
+
+        body = tk.Frame(win, bg=c.BG, padx=36, pady=26)
+        body.pack(fill=tk.BOTH, expand=True)
+
+        def label(parent, text, size=10, bold=False, color=None, **kw):
+            return tk.Label(parent, text=text, bg=c.BG, fg=color or c.TEXT,
+                            font=(c.FONT, size, "bold" if bold else "normal"), **kw)
+
+        label(body, "About", 18, True).pack()
+
+        images = tk.Frame(body, bg=c.BG)
+        images.pack(pady=(14, 10))
+        avatar = ImageTk.PhotoImage(c._avatar_image(c.AVATAR_SIZE), master=win)
+        icon_img = c._icon_image(c.ICON_SIZE)
+        avatar_label = tk.Label(images, image=avatar, bg=c.BG, bd=0)
+        avatar_label.pack(side=tk.LEFT, padx=(0, 14))
+        win._images = [avatar]  # keep references, or Tk shows blank images
+        if icon_img is not None:
+            icon = ImageTk.PhotoImage(icon_img, master=win)
+            win._images.append(icon)
+            tk.Label(images, image=icon, bg=c.BG, bd=0).pack(side=tk.LEFT)
+
+        name = tk.Frame(body, bg=c.BG)
+        name.pack()
+        label(name, APP_NAME, 14, True).pack(side=tk.LEFT)
+        label(name, f" v{APP_VERSION}", 10, color=c.MUTED).pack(side=tk.LEFT, anchor="s", pady=(0, 2))
+
+        label(body, APP_DESCRIPTION, 10, color=c.MUTED, wraplength=400, justify=tk.CENTER).pack(pady=(6, 0))
+
+        made = tk.Frame(body, bg=c.BG)
+        made.pack(pady=(12, 0))
+        label(made, "Made by", 10, padx=0).pack(side=tk.LEFT)
+        label(made, APP_AUTHOR, 10, True, padx=0).pack(side=tk.LEFT, padx=(4, 0))
+        label(body, APP_AUTHOR_EMAIL, 10, color=c.MUTED).pack()
+
+        links = tk.Frame(body, bg=c.BG)
+        links.pack(pady=(14, 0))
+        for text, url in APP_LINKS:
+            c._link_button(links, text, url).pack(side=tk.LEFT, padx=5)
+
+        docs = tk.Frame(body, bg=c.BG)
+        docs.pack(pady=(10, 0))
+        targets = (("License", "LICENSE"), ("Third-party notices", "THIRD_PARTY_NOTICES.md"),
+                   ("Source code", APP_REPOSITORY_URL))
+        for i, (text, target) in enumerate(targets):
+            if i:
+                label(docs, "\u00b7", 10, color=c.MUTED).pack(side=tk.LEFT)
+            c._small_link(docs, text, target).pack(side=tk.LEFT)
+
+        legal = f"{APP_COPYRIGHT}\nLicensed under the {APP_LICENSE_NAME}.\n" \
+                "This program comes with ABSOLUTELY NO WARRANTY."
+        label(body, legal, 9, color=c.MUTED, justify=tk.CENTER).pack(pady=(8, 0))
+
+        close = tk.Label(body, text="Close", bg=THEME["accent"], fg="#0b1a26",
+                         font=(c.FONT, 11, "bold"), pady=9, cursor="hand2")
+        close.pack(fill=tk.X, pady=(18, 0))
+        close.bind("<Button-1>", lambda e: win.destroy())
+        close.bind("<Enter>", lambda e: close.config(bg="#8cc4f5"))
+        close.bind("<Leave>", lambda e: close.config(bg=THEME["accent"]))
+
+        win.update_idletasks()
+        w, h = win.winfo_reqwidth(), win.winfo_reqheight()
+        x = (win.winfo_screenwidth() - w) // 2
+        y = (win.winfo_screenheight() - h) // 3
+        win.geometry(f"+{max(0, x)}+{max(0, y)}")
+        win.deiconify()
+        win.lift()
+        win.focus_force()
+        return win
+
+    @staticmethod
+    def _link_button(parent, text, url):
+        """Outlined link button (GitHub, LinkedIn, ...)."""
+        c = AboutWindow
+        b = tk.Label(parent, text=text, bg=c.BG, fg=c.TEXT, font=(c.FONT, 10, "bold"),
+                     padx=14, pady=6, cursor="hand2", highlightthickness=1,
+                     highlightbackground=c.LINE, highlightcolor=c.LINE)
+        b.bind("<Button-1>", lambda e: c._open_target(url))
+        b.bind("<Enter>", lambda e: b.config(fg="white", highlightbackground=THEME["accent"]))
+        b.bind("<Leave>", lambda e: b.config(fg=c.TEXT, highlightbackground=c.LINE))
+        return b
+
+    @staticmethod
+    def _small_link(parent, text, target):
+        """Small text link (License, Third-party notices, Source code)."""
+        c = AboutWindow
+        b = tk.Label(parent, text=text, bg=c.BG, fg=c.MUTED, font=(c.FONT, 9),
+                     padx=6, pady=2, cursor="hand2")
+        b.bind("<Button-1>", lambda e: c._open_document(target))
+        b.bind("<Enter>", lambda e: b.config(fg=THEME["accent"]))
+        b.bind("<Leave>", lambda e: b.config(fg=c.MUTED))
+        return b
+
+    @staticmethod
+    def _open_document(target):
+        """Opens a document shipped next to the exe (or the project), or its copy on GitHub."""
+        if target.startswith("http"):
+            AboutWindow._open_target(target)
+            return
+        local = os.path.join(BASE_DIR, target)
+        if os.path.exists(local):
+            AboutWindow._open_target(local)
+        else:
+            AboutWindow._open_target(f"{APP_REPOSITORY_URL}/blob/main/{target}")
+
+    @staticmethod
+    def _open_target(target):
+        try:
+            if hasattr(os, "startfile"):
+                os.startfile(target)
+            else:
+                webbrowser.open(target)
+        except Exception as e:
+            logger.error(f"Could not open {target}: {e}")
+
+    @staticmethod
+    def _avatar_image(size):
+        """Round author photo from assets/author.jpg with a faint outline; initials if missing."""
+        from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+        c = AboutWindow
+        scale = 4  # draw large, then shrink: smooth circle edges
+        big = size * scale
+        bg = Image.new("RGB", (big, big), c.BG)
+        mask = Image.new("L", (big, big), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, big - 1, big - 1), fill=255)
+        photo = None
+        path = os.path.join(ASSETS_DIR, "author.jpg")
+        try:
+            if os.path.exists(path):
+                photo = ImageOps.fit(Image.open(path).convert("RGB"), (big, big))
+        except Exception as e:
+            logger.warning(f"Could not load author photo: {e}")
+        if photo is None:
+            photo = Image.new("RGB", (big, big), "#2c313a")
+            draw = ImageDraw.Draw(photo)
+            initials = "".join(part[0] for part in APP_AUTHOR.replace("-", " ").split()[:2]).upper()
+            try:
+                font = ImageFont.truetype("segoeuib.ttf", int(big * 0.32))
+            except OSError:
+                font = ImageFont.load_default()
+            draw.text((big / 2, big / 2), initials, fill=THEME["accent"], font=font, anchor="mm")
+        bg.paste(photo, (0, 0), mask)
+        ring = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+        ImageDraw.Draw(ring).ellipse((1, 1, big - 2, big - 2), outline=(255, 255, 255, 60), width=scale)
+        bg = Image.alpha_composite(bg.convert("RGBA"), ring)
+        return bg.resize((size, size), Image.LANCZOS)
+
+    @staticmethod
+    def _icon_image(size):
+        """The app icon from assets/appicon.png, or None if missing."""
+        from PIL import Image
+
+        path = os.path.join(ASSETS_DIR, "appicon.png")
+        try:
+            return Image.open(path).convert("RGBA").resize((size, size), Image.LANCZOS)
+        except Exception as e:
+            logger.warning(f"Could not load app icon: {e}")
+            return None

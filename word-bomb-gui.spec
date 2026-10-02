@@ -22,11 +22,13 @@ hiddenimports = [
     *collect_submodules("winrt"),
 ]
 
-# Offline word lists (+ licence notice).
+# Offline word lists (+ licence notice) and the About window images.
 datas = [
     ("data/enable1.txt.gz", "data"),
     ("data/arabic-words.txt.gz", "data"),
     ("data/ARABIC-WORDS-NOTICE.md", "data"),
+    ("assets/author.jpg", "assets"),
+    ("assets/appicon.png", "assets"),
 ]
 
 a = Analysis(

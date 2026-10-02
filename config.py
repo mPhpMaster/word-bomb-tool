@@ -22,6 +22,25 @@ RESOURCE_DIR = _resource_dir()
 DATA_DIR = os.path.join(RESOURCE_DIR, "data")
 ASSETS_DIR = os.path.join(RESOURCE_DIR, "assets")
 
+# About window
+APP_NAME = "Word Bomb Tool"
+APP_VERSION = "4.1.0"  # keep in sync with AppVersion in word-bomb-installer.iss
+APP_DESCRIPTION = (
+    "Reads the Word Bomb prompt on your screen and types a matching word for you"
+    " — in English or Arabic."
+)
+APP_AUTHOR = "Mohammad Al-Safadi"
+APP_AUTHOR_EMAIL = "mPhpMaster@gmail.com"
+APP_COPYRIGHT = "Copyright © 2026 " + APP_AUTHOR
+APP_LICENSE_NAME = "MIT License"
+APP_REPOSITORY_URL = "https://github.com/mPhpMaster/word-bomb-tool"
+APP_LINKS = [
+    ("GitHub", "https://github.com/mPhpMaster"),
+    ("LinkedIn", "https://www.linkedin.com/in/mohammad-al-safadi/"),
+    ("Discord", "http://discord.com/invite/BRgVPum"),
+    ("Email", "mailto:" + APP_AUTHOR_EMAIL + "?subject=Word%20Bomb%20Tool"),
+]
+
 THEME = {
     "bg": "#282c34",
     "fg": "#abb2bf",
