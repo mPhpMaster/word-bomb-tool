@@ -9,7 +9,18 @@ def _app_base_dir() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
 
+def _resource_dir() -> str:
+    """Directory of bundled read-only files (PyInstaller's unpack folder when frozen)."""
+    if getattr(sys, "frozen", False):
+        return getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(sys.executable)))
+    return os.path.dirname(os.path.abspath(__file__))
+
+
 BASE_DIR = _app_base_dir()
+RESOURCE_DIR = _resource_dir()
+# Word lists (enable1.txt.gz, arabic-words.txt.gz) and images for the About window.
+DATA_DIR = os.path.join(RESOURCE_DIR, "data")
+ASSETS_DIR = os.path.join(RESOURCE_DIR, "assets")
 
 THEME = {
     "bg": "#282c34",
@@ -54,6 +65,17 @@ TYPING_DELAY_MAX = 2.0
 # Auto mode: turn_region OCR (letters+digits, lower) must contain both for "YOUR TURN" / yourturn.
 TURN_GATE_NEED_YOUR = "your"
 TURN_GATE_NEED_TURN = "turn"
+
+
+def turn_gate_accepts(text: str) -> bool:
+    """YOUR TURN -> yourturn; tolerate partial / noisy OCR."""
+    if not text:
+        return False
+    return (
+        (TURN_GATE_NEED_YOUR in text and TURN_GATE_NEED_TURN in text)
+        or ("yourturn" in text)
+        or (TURN_GATE_NEED_YOUR in text and len(text) >= 4)
+    )
 
 
 def clamp_ocr_interval(value) -> float:

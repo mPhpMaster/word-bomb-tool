@@ -1,6 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec: GUI (main.py). Run from repo root: pyinstaller word-bomb-gui.spec
 
+from PyInstaller.utils.hooks import collect_submodules
+
 block_cipher = None
 
 hiddenimports = [
@@ -15,13 +17,23 @@ hiddenimports = [
     "PIL._tkinter_finder",
     "requests",
     "certifi",
+    # Windows built-in OCR (pywinrt): the projection modules are imported lazily
+    # by winrt itself, so list them all.
+    *collect_submodules("winrt"),
+]
+
+# Offline word lists (+ licence notice).
+datas = [
+    ("data/enable1.txt.gz", "data"),
+    ("data/arabic-words.txt.gz", "data"),
+    ("data/ARABIC-WORDS-NOTICE.md", "data"),
 ]
 
 a = Analysis(
     ["main.py"],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},

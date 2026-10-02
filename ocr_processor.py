@@ -1,4 +1,3 @@
-import pytesseract
 import mss
 import hashlib
 import os
@@ -6,10 +5,15 @@ import logging
 import shutil
 import time
 import threading
-from typing import Optional, Dict
+import unicodedata
+from collections import Counter
+from typing import Optional, Dict, Tuple
 from datetime import datetime, timedelta
 from PIL import Image, ImageOps
 from config import CACHE_EXPIRY_MINUTES, OCR_STABLE_ATTEMPTS, OCR_STABLE_GAP
+import ocr_preprocess
+import windows_ocr
+import word_list
 
 def find_tesseract_path():
     """Find Tesseract installation path."""
@@ -24,29 +28,123 @@ def find_tesseract_path():
 
 TESSERACT_PATH = find_tesseract_path()
 
-if TESSERACT_PATH:
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+_pytesseract = None
+
+
+def _tesseract():
+    """pytesseract, imported on first use: it is only needed without Windows OCR,
+    and importing it (it pulls in pandas when installed) takes seconds."""
+    global _pytesseract
+    if _pytesseract is None:
+        import pytesseract
+        if TESSERACT_PATH:
+            pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+        _pytesseract = pytesseract
+    return _pytesseract
 
 logger = logging.getLogger(__name__)
 
-try:
-    _LANCZOS = Image.Resampling.LANCZOS
-except AttributeError:
-    _LANCZOS = Image.LANCZOS
+
+def keep_letters(s: str) -> str:
+    """Lowercase a-z only. Accents are stripped first ("ä" -> "a"), and anything
+    that isn't a Latin letter is dropped."""
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s).lower() if "a" <= c <= "z"
+    )
 
 
-def _upscale_if_small(image: Image.Image, min_w: int = 140, min_h: int = 48) -> Image.Image:
-    """Tesseract struggles on tiny UI crops; scale up while keeping aspect."""
-    w, h = image.size
-    if w <= 0 or h <= 0:
-        return image
-    sx = max(1.0, min_w / w)
-    sy = max(1.0, min_h / h)
-    scale = min(4.0, max(sx, sy))
-    if scale <= 1.01:
-        return image
-    nw, nh = int(w * scale), int(h * scale)
-    return image.resize((nw, nh), _LANCZOS)
+def keep_alnum(s: str) -> str:
+    return "".join(c for c in s if c.isalnum()).lower()
+
+
+def is_latin_prompt(letters: str) -> bool:
+    """True when the letters are a Latin a-z prompt."""
+    return bool(letters) and all("a" <= c <= "z" for c in letters)
+
+
+def is_arabic_prompt(letters: str) -> bool:
+    """True when the letters are an Arabic prompt."""
+    return bool(letters) and all(word_list.is_arabic_letter(c) for c in letters)
+
+
+def majority_token(text: str, anchor: str) -> str:
+    """The most frequent letters-only token in the OCR text, ignoring the anchor
+    word (the line holds several copies of the prompt). Ties go to the first seen."""
+    skip = anchor.lower()
+    tokens = [t for t in (keep_letters(x) for x in text.split()) if t and t != skip]
+    if not tokens:
+        return ""
+    return Counter(tokens).most_common(1)[0][0]
+
+
+# Two layouts (anchor, text height, gap) that each read the synthetic prompts in
+# the tests; the second only runs when the first finds nothing.
+_ENGLISH_LAYOUTS = (("WORD", 24, 1.2), ("THE", 32, 0.6))
+
+
+def letters_from_windows_ocr(clean: Image.Image) -> Optional[str]:
+    """English letters of a cleaned prompt (see ocr_preprocess.clean_prompt).
+    Returns None when the engine is unavailable."""
+    if not windows_ocr.available():
+        return None
+    for anchor, height, gap in _ENGLISH_LAYOUTS:
+        line = ocr_preprocess.layout_for_windows_ocr(clean, anchor, height, 3, gap)
+        text = windows_ocr.recognize(line)
+        if text is None:
+            return None
+        letters = majority_token(text, anchor)
+        if letters:
+            return letters
+    return ""
+
+
+def arabic_reading(clean: Image.Image, anchor: str = "") -> Tuple[str, int, bool]:
+    """Reads the prompt (three copies in a row, after the Latin anchor word if one
+    is given) with the Windows Arabic engine. Returns the most common Arabic
+    reading, how many copies gave it, and whether any copy came back with Latin
+    letters instead."""
+    if not windows_ocr.arabic_available():
+        return "", 0, False
+    line = ocr_preprocess.layout_for_windows_ocr(clean, anchor, 32, 3, 0.8)
+    text = windows_ocr.recognize(line, "ar")
+    if not text:
+        return "", 0, False
+    raw = [t for t in text.split() if not anchor or t.lower() != anchor.lower()]
+    any_latin = any(("a" <= c <= "z") or ("A" <= c <= "Z") for t in raw for c in t)
+    tokens = [t for t in ("".join(c for c in x if word_list.is_arabic_letter(c)) for x in raw) if t]
+    if not tokens:
+        return "", 0, any_latin
+    best, votes = Counter(tokens).most_common(1)[0]
+    return best, votes, any_latin
+
+
+def read_prompt(image: Image.Image) -> str:
+    """
+    Reads the prompt and decides between English and Arabic. The English engine
+    turns Arabic glyphs into plausible Latin letters ("يز" -> "cz"), and the Arabic
+    engine sometimes turns Latin ones into Arabic ("QU" -> "لا"), so: an Arabic
+    reading that all three copies agree on, with no Latin text, is Arabic;
+    otherwise an English reading of 2+ letters that some word contains wins;
+    otherwise a two-copy Arabic majority; otherwise nothing.
+    Returns lowercase a-z for English, Arabic letters for Arabic, or "".
+    """
+    clean = ocr_preprocess.clean_prompt(image)
+    if clean is None:
+        return ""
+    ar, votes, any_latin = arabic_reading(clean)
+    if votes >= 3 and not any_latin:
+        # Some fonts' "QU" reads as "لاه" three times out of three. Read the same
+        # copies again after a Latin word: the Arabic engine then reads Latin
+        # prompts as Latin, while real Arabic prompts stay Arabic.
+        _, _, latin_after_anchor = arabic_reading(clean, "WORD")
+        if not latin_after_anchor:
+            return ar
+
+    en = letters_from_windows_ocr(clean) or ""
+    if len(en) >= 2 and word_list.search(en, "Contains"):
+        return en
+
+    return ar if votes >= 2 else ""
 
 
 class OCRProcessor:
@@ -74,13 +172,7 @@ class OCRProcessor:
         Softer pipeline for YOUR TURN style UI (colored buttons, white text).
         The letter-OCR binarization often turns these regions into solid black/white.
         """
-        image = image.convert("L")
-        try:
-            image = ImageOps.autocontrast(image, cutoff=1)
-        except TypeError:
-            image = ImageOps.autocontrast(image)
-        image = _upscale_if_small(image)
-        return image
+        return ocr_preprocess.preprocess_turn_gate(image)
     
     def clear_cache(self):
         """Clear WBT cache."""
@@ -141,18 +233,30 @@ class OCRProcessor:
                 else:
                     del self.cache[img_hash]
             
-            # Preprocess image
             image = Image.frombytes("RGB", img.size, img.rgb)
+
+            # Windows' built-in engine: in-process and a few ms. Tesseract (a new
+            # process per run, ~0.5s each) is only used when Windows has no OCR
+            # language at all.
+            if windows_ocr.available():
+                letters = read_prompt(image)
+                if letters:
+                    self.cache[img_hash] = (letters, datetime.now())
+                duration = (time.time() - start_time) * 1000
+                logger.info(f"WBT completed in {duration:.2f}ms ({letters!r}, Windows OCR)")
+                return letters or None
+
+            # Preprocess image
             image = self.preprocess_image(image)
             
             # Perform WBT
-            raw_text = pytesseract.image_to_string(
+            raw_text = _tesseract().image_to_string(
                 image,
                 config="--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             )
             
             # Extract letters only
-            letters = "".join(c for c in raw_text if c.isalpha()).lower()
+            letters = keep_letters(raw_text)
             
             # Cache result
             if letters:
@@ -182,7 +286,7 @@ class OCRProcessor:
 
         def run_ocr(im: Image.Image, psm: int) -> str:
             try:
-                raw = pytesseract.image_to_string(im, config=f"--psm {psm}")
+                raw = _tesseract().image_to_string(im, config=f"--psm {psm}")
             except Exception:
                 return ""
             return "".join(c for c in raw if c.isalnum()).lower()
@@ -194,6 +298,15 @@ class OCRProcessor:
 
             # 1) Soft path (best for purple/blue buttons + white text)
             soft = self.preprocess_image_turn_gate(rgb)
+
+            # "YOUR TURN" is ordinary words, which the in-process Windows engine reads
+            # directly. Tesseract's up-to-7 launches only run without that engine.
+            if windows_ocr.available():
+                best = keep_alnum(windows_ocr.recognize(soft) or "")
+                duration = (time.time() - start_time) * 1000
+                logger.debug(f"Turn gate WBT (Windows OCR) in {duration:.2f}ms: {best!r}")
+                return best or None
+
             best = ""
             for psm in (6, 7, 8, 13):
                 t = run_ocr(soft, psm)

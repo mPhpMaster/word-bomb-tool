@@ -18,12 +18,14 @@ from config import (
     OCR_INTERVAL_MIN, OCR_INTERVAL_MAX,
     MAX_TYPED_HISTORY,
     MAX_LETTER_CHANGES,
-    TURN_GATE_NEED_YOUR,
-    TURN_GATE_NEED_TURN,
+    MAX_SUGGESTIONS_DISPLAY,
+    turn_gate_accepts,
 )
 from logging_utils import setup_logging, LogQueue
 from state import StateManager
-from ocr_processor import OCRProcessor
+from ocr_processor import OCRProcessor, is_latin_prompt, is_arabic_prompt
+import windows_ocr
+import word_list
 from api_client import DatamuseClient
 from suggestion_manager import SuggestionManager
 from ui_manager import RegionOverlay, RegionSelector, LogDisplay, HelpWindow, DefinitionPopup
@@ -116,16 +118,6 @@ class OCRApplication:
             'exit': self.graceful_exit,
         }
 
-    def _turn_gate_accepts(self, text: str) -> bool:
-        """YOUR TURN → yourturn; tolerate partial / noisy OCR."""
-        if not text:
-            return False
-        return (
-            (TURN_GATE_NEED_YOUR in text and TURN_GATE_NEED_TURN in text)
-            or ("yourturn" in text)
-            or (TURN_GATE_NEED_YOUR in text and len(text) >= 4)
-        )
-
     def _auto_mode_turn_ok(self):
         """
         If turn_region is set, auto mode only types when OCR shows YOUR TURN.
@@ -138,7 +130,7 @@ class OCRApplication:
         text = self.ocr_processor.perform_ocr_turn_gate(dict(tr))
         if not text:
             return False, ""
-        return self._turn_gate_accepts(text), text
+        return turn_gate_accepts(text), text
 
     def log(self, message: str, level: str = "INFO"):
         """Log message to UI."""
@@ -253,6 +245,16 @@ Quit Application:   Ctrl+C
     def _handle_letters(self, letters: str, typing_source: str, region: dict):
         """Suggest and type a word for letters; returns new letters if they changed on screen."""
         self._last_handled_letters = letters
+
+        # Prompts are Latin (English list) or Arabic (Arabic list); anything else is
+        # a misread. A single letter is a partial read, not a prompt.
+        if not is_latin_prompt(letters) and not is_arabic_prompt(letters):
+            self.log(f"Unrecognised letters '{letters}', nothing typed.", "WARNING")
+            return None
+        if len(letters) < 2:
+            self.log(f"Ignoring one-letter read '{letters}' (prompts have 2+ letters).", "WARNING")
+            return None
+
         state = self.state_manager.get_state()
         mode = SEARCH_MODES[state.current_mode_index]
 
@@ -262,14 +264,14 @@ Quit Application:   Ctrl+C
         self.state_manager.update_state(last_ocr_text=letters)
         self.log(f"--- WBT: {letters} ---")
 
-        suggestions = self.api_client.get_suggestions(letters, mode)
+        suggestions = self._get_suggestions(letters, mode)
         self.state_manager.update_state(api_status=self.api_client.status)
 
         if suggestions:
             suggestions = SuggestionManager.sort_suggestions(
                 suggestions,
                 SORT_MODES[state.current_sort_mode_index]
-            )
+            )[:MAX_SUGGESTIONS_DISPLAY]
             self.state_manager.update_state(suggestions=suggestions, suggestion_index=0)
 
             self.log(f"Found {len(suggestions)} suggestions.")
@@ -281,6 +283,33 @@ Quit Application:   Ctrl+C
             self.state_manager.update_state(suggestions=[], suggestion_index=0)
 
         return self.type_next_word(typing_source, region)
+
+    def _get_suggestions(self, letters: str, mode: str) -> list:
+        """
+        Suggestions from the built-in word list for Starts With / Ends With / Contains
+        (a few ms, offline), and from Datamuse for Rhymes / Related Words.
+        """
+        # Datamuse is English-only, so an Arabic prompt is always matched against
+        # the Arabic list (as Contains when Rhymes/Related Words is selected).
+        if word_list.is_arabic(letters) and not word_list.supports(mode):
+            mode = "Contains"
+        if not word_list.supports(mode):
+            return self.api_client.get_suggestions(letters, mode)
+
+        start = time.perf_counter()
+        search = word_list.fix_il_confusion(letters, mode)
+        if search != letters:
+            self.log(f"Reading '{letters}' as '{search}' (I/L look-alike).")
+        local = word_list.search(search, mode)
+        logger.info(
+            f"Word list: {len(local)} matches for '{search}' in "
+            f"{(time.perf_counter() - start) * 1000:.1f}ms"
+        )
+        # No word contains these letters, so they were misread. Asking Datamuse here
+        # used to return junk such as "noczim" and type it.
+        if not local:
+            self.log(f"No word contains '{letters}', so it is probably a misread; nothing typed.", "WARNING")
+        return local
 
     def _letters_changed(self, region, expected):
         """Re-read the letters; returns the new letters if they differ from expected, else None."""
@@ -716,9 +745,13 @@ Quit Application:   Ctrl+C
         """Start application."""
         logger.info("========== WBT STARTED ==========")
 
-        if not self.check_and_install_tesseract():
+        # Windows' built-in OCR does the reading; Tesseract is only needed (and only
+        # offered for install) when Windows has no OCR language at all.
+        windows_engine = windows_ocr.available()
+        if not windows_engine and not self.check_and_install_tesseract():
             time.sleep(2)
             self.graceful_exit(1)
+        word_list.preload()
 
         self.region_overlay = RegionOverlay()
         self.log_display = LogDisplay(
@@ -733,6 +766,11 @@ Quit Application:   Ctrl+C
         self.log("========== WBT STARTED ==========")
         for i, line in enumerate(self.get_state_text().split("\n")):
             self.log(f"{line}")
+        if windows_engine:
+            langs = "English + Arabic" if windows_ocr.arabic_available() else "English"
+            self.log(f"OCR: Windows built-in engine (fast, {langs}). Word list: offline.")
+        else:
+            self.log("OCR: Tesseract (no Windows OCR language installed). Word list: offline.")
 
         state = self.state_manager.get_state()
         if state.region is None:

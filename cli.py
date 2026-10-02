@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Command-line interface for Word Bomb Tool — suggestions and definitions via Datamuse
-without the GUI or hotkeys.
+Command-line interface for Word Bomb Tool — suggestions and definitions without the
+GUI or hotkeys. Starts With / Ends With / Contains come from the built-in offline word
+lists (English and Arabic); Rhymes, Related Words and definitions use Datamuse.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from typing import Dict, List, Optional
 from config import MAX_SUGGESTIONS_DISPLAY, SEARCH_MODES, SORT_MODES
 from api_client import DatamuseClient
 from suggestion_manager import SuggestionManager
+import word_list
 
 SEARCH_ALIASES: Dict[str, str] = {
     "starts-with": "Starts With",
@@ -67,9 +69,18 @@ def cmd_suggest(args: argparse.Namespace) -> int:
         print("error: letters must not be empty", file=sys.stderr)
         return 2
 
+    # Datamuse is English-only, so Arabic letters always use the Arabic list.
+    if word_list.is_arabic(letters) and not word_list.supports(search_mode):
+        search_mode = "Contains"
+
     client = DatamuseClient()
     try:
-        raw = client.get_suggestions(letters, search_mode)
+        if word_list.supports(search_mode):
+            raw = word_list.search(letters, search_mode)
+            source = "word list"
+        else:
+            raw = client.get_suggestions(letters, search_mode)
+            source = "datamuse"
         sorted_words = SuggestionManager.sort_suggestions(raw, sort_mode)
         words = sorted_words[:limit]
     finally:
@@ -82,6 +93,7 @@ def cmd_suggest(args: argparse.Namespace) -> int:
                     "letters": letters,
                     "search_mode": search_mode,
                     "sort_mode": sort_mode,
+                    "source": source,
                     "api_status": client.status,
                     "words": words,
                 },
@@ -90,7 +102,7 @@ def cmd_suggest(args: argparse.Namespace) -> int:
         )
         return 0
 
-    print(f"search: {search_mode}  sort: {sort_mode}  api: {client.status}")
+    print(f"search: {search_mode}  sort: {sort_mode}  source: {source}  api: {client.status}")
     if not words:
         print("(no words)")
         return 0
@@ -153,7 +165,8 @@ def cmd_list_modes(_: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="wbt",
-        description="Word Bomb Tool CLI — word suggestions and definitions (Datamuse).",
+        description="Word Bomb Tool CLI — word suggestions (offline word lists / Datamuse) "
+        "and definitions (Datamuse).",
     )
     parser.add_argument(
         "-v",

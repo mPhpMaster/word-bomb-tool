@@ -7,7 +7,12 @@ a = Analysis(
     ["cli.py"],
     pathex=[],
     binaries=[],
-    datas=[],
+    # Offline word lists used by "suggest" (Starts With / Ends With / Contains).
+    datas=[
+        ("data/enable1.txt.gz", "data"),
+        ("data/arabic-words.txt.gz", "data"),
+        ("data/ARABIC-WORDS-NOTICE.md", "data"),
+    ],
     hiddenimports=["requests", "certifi"],
     hookspath=[],
     hooksconfig={},
