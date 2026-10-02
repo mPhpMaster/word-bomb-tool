@@ -54,11 +54,21 @@ OCR_TIMEOUT = 1
 # Letter OCR is only trusted when two captures in a row agree (filters one-off
 # misreads of transition frames). Up to OCR_STABLE_ATTEMPTS captures, OCR_STABLE_GAP s apart.
 OCR_STABLE_ATTEMPTS = 5
-OCR_STABLE_GAP = 0.12
+OCR_STABLE_GAP = 0.04
+# Before typing/Enter, a change of letters only counts after this many identical
+# reads in a row (out of at most CHANGE_CONFIRM_MAX_READS); any read of the original
+# letters cancels it. Filters flicker while the bomb shakes ("ump" -> "ume" -> "ump").
+CHANGE_CONFIRM_READS = 3
+CHANGE_CONFIRM_MAX_READS = 6
 # How many times one action may switch to newly read letters before giving up.
 MAX_LETTER_CHANGES = 3
 # Default ~human casual typing; Options can tune (typical comfortable range ~0.22–0.42).
 TYPING_DELAY = 0.28
+# Fast typing (the default): no "thinking" pause, a fixed short gap between keys
+# and a brief pause before Enter. Human-like typing uses TYPING_DELAY.
+FAST_TYPING = True
+FAST_TYPING_KEY_GAP = 0.012
+FAST_TYPING_ENTER_PAUSE = 0.025
 TYPING_DELAY_MIN = 0.01
 TYPING_DELAY_MAX = 2.0
 

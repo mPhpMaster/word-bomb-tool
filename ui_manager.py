@@ -241,6 +241,10 @@ class LogDisplay(threading.Thread):
             label="OCR interval...",
             command=self.callbacks["set_ocr_interval"],
         )
+        options_menu.add_command(
+            label="Fast typing (on/off)",
+            command=self.callbacks["toggle_fast_typing"],
+        )
         options_menu.add_separator()
         options_menu.add_command(label="Clear Typed History", 
                                 command=self.callbacks['clear_history'], accelerator="Delete")

@@ -19,6 +19,11 @@ from config import (
     MAX_TYPED_HISTORY,
     MAX_LETTER_CHANGES,
     MAX_SUGGESTIONS_DISPLAY,
+    OCR_STABLE_GAP,
+    CHANGE_CONFIRM_READS,
+    CHANGE_CONFIRM_MAX_READS,
+    FAST_TYPING_KEY_GAP,
+    FAST_TYPING_ENTER_PAUSE,
     turn_gate_accepts,
 )
 from logging_utils import setup_logging, LogQueue
@@ -68,6 +73,14 @@ def _type_word_human_like(word: str, base_delay: float, inter_key_scale: float =
         time.sleep(dt)
 
 
+def _type_word_fast(word: str, key_gap: float = FAST_TYPING_KEY_GAP) -> None:
+    """Type the word with a short fixed gap between keys (fast mode)."""
+    for i, ch in enumerate(word):
+        keyboard.write(ch)
+        if i < len(word) - 1 and key_gap > 0:
+            time.sleep(key_gap)
+
+
 class OCRApplication:
     """Main application class."""
 
@@ -115,6 +128,7 @@ class OCRApplication:
             'fetch_definitions': self.handle_alt_1_press,
             'set_typing_delay': self.set_typing_delay,
             'set_ocr_interval': self.set_ocr_interval,
+            'toggle_fast_typing': self.toggle_fast_typing,
             'exit': self.graceful_exit,
         }
 
@@ -156,6 +170,7 @@ Current Mode: {mode}
 Current Sort: {sort_mode}
 Typing delay: {state.typing_delay}s (~avg between keys)
 OCR interval: {state.ocr_interval}s (auto mode poll)
+Fast typing: {'On' if state.fast_typing else 'Off (human-like delays)'}
 Auto mode only on your turn: {tg}
 Auto Mode: {'On' if state.auto_mode_active else 'Off'}
 Words Typed: {state.total_typed_count}
@@ -312,13 +327,41 @@ Quit Application:   Ctrl+C
         return local
 
     def _letters_changed(self, region, expected):
-        """Re-read the letters; returns the new letters if they differ from expected, else None."""
+        """
+        Re-read the letters; returns the new letters if they really changed from
+        expected, else None. While the bomb shakes the reading flickers between
+        look-alikes ("ump" -> "ume" -> "ump"), and treating each flicker as a change
+        erased correct words and cost seconds. So any read that still shows the
+        expected letters means "unchanged", and a change needs CHANGE_CONFIRM_READS
+        identical reads in a row of letters some word contains.
+        """
         if not region or not expected:
             return None
-        current = self.ocr_processor.perform_ocr_stable(region)
-        if current and current != expected:
-            return current
+        candidate = None
+        streak = 0
+        for i in range(CHANGE_CONFIRM_MAX_READS):
+            if i > 0:
+                time.sleep(OCR_STABLE_GAP)
+            current = self.ocr_processor.perform_ocr(region)
+            if not current:
+                streak = 0
+                continue
+            if current == expected:
+                return None
+            streak = streak + 1 if current == candidate else 1
+            candidate = current
+            if streak >= CHANGE_CONFIRM_READS and self._is_plausible_prompt(current):
+                return current
         return None
+
+    @staticmethod
+    def _is_plausible_prompt(letters: str) -> bool:
+        """Latin letters some English word contains, or Arabic letters some Arabic word contains."""
+        return (
+            (is_latin_prompt(letters) or is_arabic_prompt(letters))
+            and len(letters) >= 2
+            and bool(word_list.search(letters, "Contains"))
+        )
 
     def handle_alt_1_press(self):
         """WBT and fetch definitions."""
@@ -383,23 +426,29 @@ Quit Application:   Ctrl+C
             self.log("All available suggestions have been typed.", "WARNING")
             return None
 
-        # "Thinking" before hands move (same path for Shift and auto; auto slightly longer).
-        if typing_source == "auto":
-            time.sleep(random.uniform(0.52, 1.12))
-        else:
-            time.sleep(random.uniform(0.3, 0.72))
-
         expected = state.last_ocr_text
-        changed = self._letters_changed(region, expected)
-        if changed:
-            return changed
+        if state.fast_typing:
+            # The letters were read moments ago, so there is nothing to re-check yet.
+            self.log(f"Typing: '{word}'")
+            _type_word_fast(word)
+            time.sleep(FAST_TYPING_ENTER_PAUSE)
+        else:
+            # "Thinking" before hands move (same path for Shift and auto; auto slightly longer).
+            if typing_source == "auto":
+                time.sleep(random.uniform(0.52, 1.12))
+            else:
+                time.sleep(random.uniform(0.3, 0.72))
 
-        delay = state.typing_delay
-        self.log(f"Typing: '{word}'")
-        # Slower inter-key timing than raw setting (auto a bit slower than Shift).
-        scale = 1.32 if typing_source == "auto" else 1.22
-        _type_word_human_like(word, delay, inter_key_scale=scale)
-        time.sleep(random.uniform(0.26, 0.62))
+            changed = self._letters_changed(region, expected)
+            if changed:
+                return changed
+
+            delay = state.typing_delay
+            self.log(f"Typing: '{word}'")
+            # Slower inter-key timing than raw setting (auto a bit slower than Shift).
+            scale = 1.32 if typing_source == "auto" else 1.22
+            _type_word_human_like(word, delay, inter_key_scale=scale)
+            time.sleep(random.uniform(0.26, 0.62))
 
         changed = self._letters_changed(region, expected)
         if changed:
@@ -519,6 +568,13 @@ Quit Application:   Ctrl+C
         self.state_manager.update_state(ocr_interval=val)
         self.state_manager.save_state()
         self.log(f"OCR interval set to {val} s.")
+
+    def toggle_fast_typing(self):
+        """Switch between fast typing (default) and human-like typing delays; saved to ocr_config.json."""
+        on = not self.state_manager.get_state().fast_typing
+        self.state_manager.update_state(fast_typing=on)
+        self.state_manager.save_state()
+        self.log("Fast typing ON (no pauses)." if on else "Fast typing OFF (human-like typing delays).")
 
     def set_sort_mode(self, mode_index: int):
         """Set sort mode."""

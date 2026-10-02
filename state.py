@@ -9,6 +9,7 @@ from config import (
     METRICS_FILE,
     TYPING_DELAY,
     OCR_INTERVAL,
+    FAST_TYPING,
     clamp_typing_delay,
     clamp_ocr_interval,
 )
@@ -54,6 +55,8 @@ class AppState:
     total_typed_count: int = 0
     typing_delay: float = TYPING_DELAY
     ocr_interval: float = OCR_INTERVAL
+    # No thinking pause and short key gaps; off = human-like typing_delay timing.
+    fast_typing: bool = FAST_TYPING
     api_status: str = "[OK] Online"
     metrics: AppMetrics = field(default_factory=AppMetrics)
 
@@ -139,6 +142,7 @@ class StateManager:
                     "total_typed_count": self.state.total_typed_count,
                     "typing_delay": self.state.typing_delay,
                     "ocr_interval": self.state.ocr_interval,
+                    "fast_typing": self.state.fast_typing,
                 }
             with open(CONFIG_FILE, 'w') as f:
                 json.dump(config, f, indent=2)
@@ -187,6 +191,8 @@ class StateManager:
                 self.state.typing_delay = clamp_typing_delay(config["typing_delay"])
             if "ocr_interval" in config:
                 self.state.ocr_interval = clamp_ocr_interval(config["ocr_interval"])
+            if isinstance(config.get("fast_typing"), bool):
+                self.state.fast_typing = config["fast_typing"]
 
     def save_metrics(self):
         """Save metrics to file."""
