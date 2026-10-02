@@ -1,11 +1,34 @@
 # ui_manager.py - UI components and overlays
 
+import ctypes
+import logging
 import threading
 from typing import Callable, Optional
 
 import tkinter as tk
 from tkinter import ttk
 from config import THEME, SEARCH_MODES, SORT_MODES
+
+logger = logging.getLogger(__name__)
+
+# Pixels between the region and its outline, so the outline is drawn outside the
+# captured area (on the region's edge it was read as an extra "i" or "l").
+OVERLAY_OUTSET = 3
+# Overlay interior color; made fully transparent (and click-through) by Windows.
+_OVERLAY_KEY = "#ff00fe"
+WDA_EXCLUDEFROMCAPTURE = 0x11
+
+
+def _exclude_from_capture(win: tk.Misc) -> None:
+    """Keep a window out of screen captures (Windows 10 2004+), so OCR never sees it."""
+    try:
+        win.update_idletasks()
+        user32 = ctypes.windll.user32
+        hwnd = user32.GetParent(win.winfo_id()) or win.winfo_id()
+        if not user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE):
+            logger.warning("SetWindowDisplayAffinity failed; the region outline may be captured")
+    except Exception as e:
+        logger.warning(f"Could not exclude overlay from capture: {e}")
 
 class RegionOverlay(threading.Thread):
     """Displays selected WBT region overlay (letters) and optional turn-gate region (green)."""
@@ -19,46 +42,50 @@ class RegionOverlay(threading.Thread):
         self.ready = threading.Event()
         self.start()
 
+    @staticmethod
+    def _setup_outline_window(win, canvas_color, tag):
+        """Frameless topmost window showing only an outline: the interior is a
+        transparent color key, and the window is excluded from screen capture."""
+        win.withdraw()
+        win.attributes("-topmost", True)
+        win.attributes("-alpha", 0.8)
+        win.overrideredirect(True)
+        win.config(bg=_OVERLAY_KEY)
+        win.attributes("-transparentcolor", _OVERLAY_KEY)
+        canvas = tk.Canvas(win, bg=_OVERLAY_KEY, highlightthickness=0)
+        canvas.pack(fill=tk.BOTH, expand=True)
+        canvas.create_rectangle(0, 0, 0, 0, outline=canvas_color, width=2, tags=tag)
+        _exclude_from_capture(win)
+        return canvas
+
     def run(self):
         self.root = tk.Tk()
-        self.root.withdraw()
-        self.root.attributes("-topmost", True)
-        self.root.attributes("-alpha", 0.4)
-        self.root.overrideredirect(True)
-
-        self.canvas = tk.Canvas(self.root, bg=THEME["bg"], highlightthickness=0)
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-        self.canvas.create_rectangle(0, 0, 0, 0, outline=THEME["accent"], width=2, tags="border")
+        self.canvas = self._setup_outline_window(self.root, THEME["accent"], "border")
 
         self.turn_win = tk.Toplevel(self.root)
-        self.turn_win.withdraw()
-        self.turn_win.attributes("-topmost", True)
-        self.turn_win.attributes("-alpha", 0.4)
-        self.turn_win.overrideredirect(True)
-        self.turn_canvas = tk.Canvas(self.turn_win, bg=THEME["bg"], highlightthickness=0)
-        self.turn_canvas.pack(fill=tk.BOTH, expand=True)
-        self.turn_canvas.create_rectangle(
-            0, 0, 0, 0, outline=THEME["success"], width=2, tags="turn_border"
-        )
+        self.turn_canvas = self._setup_outline_window(self.turn_win, THEME["success"], "turn_border")
 
         self.ready.set()
         self.root.mainloop()
 
+    @staticmethod
+    def _place_outline(win, canvas, tag, region):
+        """Positions the window OVERLAY_OUTSET px around the region, outline on its outer edge."""
+        o = OVERLAY_OUTSET
+        x, y = region["left"] - o, region["top"] - o
+        w, h = region["width"] + 2 * o, region["height"] + 2 * o
+        win.geometry(f"{w}x{h}+{x}+{y}")
+        canvas.coords(tag, 1, 1, w - 1, h - 1)
+
     def _apply_region_geometry(self):
         if not self._region:
             return
-        x, y = self._region["left"], self._region["top"]
-        w, h = self._region["width"], self._region["height"]
-        self.root.geometry(f"{w}x{h}+{x}+{y}")
-        self.canvas.coords("border", 2, 2, w - 2, h - 2)
+        self._place_outline(self.root, self.canvas, "border", self._region)
 
     def _apply_turn_region_geometry(self):
         if not self._turn_region:
             return
-        x, y = self._turn_region["left"], self._turn_region["top"]
-        w, h = self._turn_region["width"], self._turn_region["height"]
-        self.turn_win.geometry(f"{w}x{h}+{x}+{y}")
-        self.turn_canvas.coords("turn_border", 2, 2, w - 2, h - 2)
+        self._place_outline(self.turn_win, self.turn_canvas, "turn_border", self._turn_region)
 
     def set_bundle_visible(self, visible: bool):
         """Show or hide the overlay with the log window; keeps the selected region data."""
