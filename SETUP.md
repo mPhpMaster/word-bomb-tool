@@ -8,6 +8,12 @@ word-bomb-tool/
 ├── logging_utils.py       # Logging configuration and utilities
 ├── state.py               # Application state management
 ├── ocr_processor.py       # OCR processing and text recognition
+├── ocr_preprocess.py      # Image cleanup and layout for the Windows OCR engine
+├── windows_ocr.py         # Windows built-in OCR (Windows.Media.Ocr via pywinrt)
+├── word_list.py           # Offline English/Arabic word search
+├── data/                  # Word lists (ENABLE, Arabic) and the Arabic list's notice
+├── assets/                # Images for the About window
+├── tests/                 # unittest tests and real game captures
 ├── api_client.py          # Datamuse API client for word suggestions
 ├── suggestion_manager.py  # Word suggestion logic and filtering
 ├── ui_manager.py          # User interface components
@@ -29,11 +35,13 @@ word-bomb-tool/
   - Download: [Python Downloads](https://www.python.org/downloads/)
   - During installation, make sure to check "Add Python to PATH"
 
-- **Tesseract OCR** (required for text recognition)
+- **OCR**: the OCR engine built into Windows 10 (2004+) / 11 is used. For Arabic
+  prompts add the Arabic language (with its OCR feature) in Windows Settings.
+- **Tesseract OCR** (only when Windows has no OCR language installed)
   - Windows: [Download installer](https://github.com/UB-Mannheim/tesseract/wiki)
   - macOS: `brew install tesseract`
   - Ubuntu/Debian: `sudo apt install tesseract-ocr`
-  - The application will attempt to auto-install Tesseract on first run
+  - The application offers to install Tesseract on first run only in that case
 
 ### 2. Install Python Dependencies
 

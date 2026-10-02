@@ -26,6 +26,8 @@ Source: "dist\WordBombGUI.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\WordBombCLI.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "ocr_config.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "THIRD_PARTY_NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "data\ARABIC-WORDS-NOTICE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "run.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "run-cli.bat"; DestDir: "{app}"; Flags: ignoreversion
